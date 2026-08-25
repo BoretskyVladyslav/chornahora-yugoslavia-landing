@@ -117,12 +117,12 @@
 
 	function resetWarehouse() {
 		warehouse.disabled = true;
-		warehouse.innerHTML = '<option value="">Спочатку оберіть місто</option>';
+		warehouse.innerHTML = '<option value="">Виберіть відділення або поштомат</option>';
 		warehouseLabel.value = "";
 	}
 
 	function fillWarehouses(list) {
-		warehouse.innerHTML = '<option value="">Оберіть відділення або поштомат</option>';
+		warehouse.innerHTML = '<option value="">Виберіть відділення або поштомат</option>';
 		list.forEach(function (item) {
 			var opt = document.createElement("option");
 			opt.value = item.ref;

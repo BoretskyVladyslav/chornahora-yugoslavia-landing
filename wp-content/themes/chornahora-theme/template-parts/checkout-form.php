@@ -33,19 +33,19 @@ $amount = (int) CHORNAHORA_BOOK_PRICE;
 			<section class="checkout-section">
 				<h2 class="checkout-section__title">Доставка Новою Поштою</h2>
 
-				<div class="checkout-field checkout-field--suggest">
+				<div class="checkout-field checkout-field--suggest checkout-field--chevron">
 					<label for="ch-city">Виберіть населений пункт</label>
-					<input id="ch-city" name="city" type="text" autocomplete="off" required>
+					<input id="ch-city" name="city" type="text" autocomplete="off" placeholder="Виберіть населений пункт" required>
 					<input type="hidden" name="city_ref" id="ch-city-ref">
 					<input type="hidden" name="settlement_ref" id="ch-settlement-ref">
 					<ul class="checkout-suggest" id="ch-city-suggest" hidden role="listbox"></ul>
 					<span class="checkout-field__error" data-error-for="city"></span>
 				</div>
 
-				<div class="checkout-field">
+				<div class="checkout-field checkout-field--chevron">
 					<label for="ch-warehouse">Виберіть відділення або поштомат</label>
 					<select id="ch-warehouse" name="warehouse_ref" required disabled>
-						<option value="">Спочатку оберіть місто</option>
+						<option value="">Виберіть відділення або поштомат</option>
 					</select>
 					<input type="hidden" name="warehouse_label" id="ch-warehouse-label">
 					<span class="checkout-field__error" data-error-for="warehouse"></span>
@@ -66,8 +66,14 @@ $amount = (int) CHORNAHORA_BOOK_PRICE;
 					<span>Книга “Кривава агонія Югославії” (Олександр Ткаченко) × 1</span>
 					<strong><?php echo esc_html( (string) $amount ); ?> грн.</strong>
 				</div>
-				<p class="checkout-box__meta">ВІДПРАВЛЕННЯ: Нова Пошта</p>
-				<p class="checkout-box__total">ВСЬОГО: <?php echo esc_html( (string) $amount ); ?> ГРН.</p>
+				<div class="checkout-box__row checkout-box__row--ship">
+					<span>ВІДПРАВЛЕННЯ</span>
+					<span>Нова Пошта</span>
+				</div>
+				<div class="checkout-box__row checkout-box__row--total">
+					<span>ВСЬОГО</span>
+					<strong><?php echo esc_html( (string) $amount ); ?> ГРН.</strong>
+				</div>
 			</section>
 
 			<section class="checkout-box">
@@ -95,7 +101,7 @@ $amount = (int) CHORNAHORA_BOOK_PRICE;
 
 				<p class="checkout-form__status" data-form-status aria-live="polite"></p>
 
-				<button class="btn btn--primary checkout-form__submit" type="submit">
+				<button class="btn checkout-form__submit" type="submit">
 					ПІДТВЕРДИТИ ЗАМОВЛЕННЯ
 				</button>
 			</section>
