@@ -12,6 +12,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 			<span></span>
 		</button>
 		<nav id="site-nav" class="site-nav" aria-label="Primary">
+			<button class="nav-close" type="button" aria-label="Close">
+				<span></span>
+			</button>
 			<ul>
 				<li><a href="<?php echo esc_url( home_url( '/' ) ); ?>">Про нас</a></li>
 				<li><a href="<?php echo esc_url( home_url( '/oplata-ta-dostavka/' ) ); ?>">Оплата та доставка</a></li>
@@ -22,3 +25,4 @@ if ( ! defined( 'ABSPATH' ) ) {
 		</nav>
 	</div>
 </header>
+<div class="nav-overlay" id="nav-overlay"></div>
