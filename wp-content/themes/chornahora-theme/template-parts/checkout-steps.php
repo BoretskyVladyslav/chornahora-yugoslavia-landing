@@ -20,6 +20,9 @@ $steps   = array(
 			} elseif ( $index < $current ) {
 				$class .= ' is-done';
 			}
+			if ( 3 === $index ) {
+				$class .= ' checkout-steps__item--received';
+			}
 			?>
 			<li class="<?php echo esc_attr( $class ); ?>">
 				<span class="checkout-steps__num" aria-hidden="true"><?php echo esc_html( (string) $index ); ?></span>

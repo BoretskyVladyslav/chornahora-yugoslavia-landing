@@ -8,6 +8,7 @@
 		navToggle.addEventListener("click", function () {
 			var open = nav.classList.toggle("is-open");
 			navToggle.classList.toggle("is-open", open);
+			document.body.classList.toggle("nav-open", open);
 			navToggle.setAttribute("aria-expanded", open ? "true" : "false");
 			navToggle.setAttribute("aria-label", open ? "Close" : "Menu");
 		});
