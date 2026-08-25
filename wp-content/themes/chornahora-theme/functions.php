@@ -5,6 +5,18 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 define( 'CHORNAHORA_CHECKOUT_URL', 'https://rusova.chornahora.com.ua/' );
+define( 'CHORNAHORA_BOOK_PRICE', 550 );
+define( 'CHORNAHORA_NP_API_KEY', 'b1c8fee45753bde5092988529e9f305b' );
+define( 'CHORNAHORA_ORDER_EMAIL', 'chornagorabook@gmail.com' );
+define( 'CHORNAHORA_SHEETS_ID', '1qVMbKvY5Bs6EGUGi-Y4mdbB5mCEviQn9bspCrNjsYM4' );
+define( 'CHORNAHORA_SHEETS_WEBHOOK', '' );
+define( 'CHORNAHORA_WFP_MERCHANT', 'test_merch_n1' );
+define( 'CHORNAHORA_WFP_SECRET', 'flk3409refn54t54t*FNJRET' );
+
+require get_template_directory() . '/inc/checkout/class-nova-poshta.php';
+require get_template_directory() . '/inc/checkout/class-wayforpay.php';
+require get_template_directory() . '/inc/checkout/class-order-processor.php';
+require get_template_directory() . '/inc/checkout/ajax.php';
 
 function chornahora_theme_setup() {
 	add_theme_support( 'title-tag' );
@@ -63,6 +75,24 @@ function chornahora_theme_scripts() {
 			$version,
 			true
 		);
+
+		wp_enqueue_script(
+			'chornahora-checkout',
+			chornahora_asset_uri( 'js/checkout.js' ),
+			array(),
+			$version,
+			true
+		);
+
+		wp_localize_script(
+			'chornahora-checkout',
+			'chCheckout',
+			array(
+				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+				'nonce'   => wp_create_nonce( 'chornahora_checkout' ),
+				'amount'  => CHORNAHORA_BOOK_PRICE,
+			)
+		);
 	} else {
 		wp_enqueue_script(
 			'chornahora-main',
@@ -74,6 +104,29 @@ function chornahora_theme_scripts() {
 	}
 }
 add_action( 'wp_enqueue_scripts', 'chornahora_theme_scripts' );
+
+function chornahora_register_order_cpt() {
+	register_post_type(
+		'ch_order',
+		array(
+			'labels'      => array(
+				'name'          => 'Замовлення',
+				'singular_name' => 'Замовлення',
+			),
+			'public'      => false,
+			'show_ui'     => false,
+			'supports'    => array( 'title' ),
+		)
+	);
+}
+add_action( 'init', 'chornahora_register_order_cpt' );
+
+add_action( 'wp_ajax_ch_search_cities', 'ch_search_cities' );
+add_action( 'wp_ajax_nopriv_ch_search_cities', 'ch_search_cities' );
+add_action( 'wp_ajax_ch_get_warehouses', 'ch_get_warehouses' );
+add_action( 'wp_ajax_nopriv_ch_get_warehouses', 'ch_get_warehouses' );
+add_action( 'wp_ajax_ch_process_order', 'ch_process_order' );
+add_action( 'wp_ajax_nopriv_ch_process_order', 'ch_process_order' );
 
 function chornahora_bootstrap_pages() {
 	$pages = array(
