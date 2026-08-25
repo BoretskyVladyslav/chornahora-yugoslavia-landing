@@ -9,9 +9,23 @@ define( 'CHORNAHORA_PAGES_VERSION', 2 );
 define( 'CHORNAHORA_NP_API_KEY', 'b1c8fee45753bde5092988529e9f305b' );
 define( 'CHORNAHORA_ORDER_EMAIL', 'chornagorabook@gmail.com' );
 define( 'CHORNAHORA_SHEETS_ID', '1qVMbKvY5Bs6EGUGi-Y4mdbB5mCEviQn9bspCrNjsYM4' );
-define( 'CHORNAHORA_SHEETS_WEBHOOK', '' );
-define( 'CHORNAHORA_WFP_MERCHANT', 'test_merch_n1' );
-define( 'CHORNAHORA_WFP_SECRET', 'flk3409refn54t54t*FNJRET' );
+
+if ( ! defined( 'CHORNAHORA_SHEETS_WEBHOOK_URL' ) ) {
+	$legacy_sheets = defined( 'CHORNAHORA_SHEETS_WEBHOOK' ) ? CHORNAHORA_SHEETS_WEBHOOK : '';
+	define( 'CHORNAHORA_SHEETS_WEBHOOK_URL', $legacy_sheets );
+}
+
+if ( ! defined( 'CHORNAHORA_SHEETS_WEBHOOK' ) ) {
+	define( 'CHORNAHORA_SHEETS_WEBHOOK', CHORNAHORA_SHEETS_WEBHOOK_URL );
+}
+
+if ( ! defined( 'CHORNAHORA_WFP_MERCHANT' ) ) {
+	define( 'CHORNAHORA_WFP_MERCHANT', 'test_merch_n1' );
+}
+
+if ( ! defined( 'CHORNAHORA_WFP_SECRET' ) ) {
+	define( 'CHORNAHORA_WFP_SECRET', 'flk3409refn54t54t*FNJRET' );
+}
 
 require get_template_directory() . '/inc/checkout/class-nova-poshta.php';
 require get_template_directory() . '/inc/checkout/class-wayforpay.php';
@@ -32,9 +46,24 @@ function chornahora_checkout_url() {
 	return home_url( '/checkout/' );
 }
 
-function chornahora_thankyou_url() {
-	return home_url( '/thank-you/' );
+function chornahora_thankyou_url( $order_id = '' ) {
+	$url = home_url( '/thank-you/' );
+
+	if ( '' !== $order_id ) {
+		$url = add_query_arg( 'order', (string) $order_id, $url );
+	}
+
+	return $url;
 }
+
+function chornahora_handle_wfp_notify() {
+	if ( ! isset( $_GET['ch_wfp'] ) || 'notify' !== $_GET['ch_wfp'] ) {
+		return;
+	}
+
+	Chornahora_Wayforpay::handle_notify();
+}
+add_action( 'init', 'chornahora_handle_wfp_notify', 0 );
 
 function chornahora_theme_scripts() {
 	$version = wp_get_theme()->get( 'Version' );

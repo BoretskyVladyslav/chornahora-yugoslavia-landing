@@ -932,6 +932,33 @@ body.nav-open {
 	color: var(--ch-muted);
 }
 
+.checkout-thankyou__summary {
+	display: grid;
+	gap: 0.75rem 1rem;
+	margin: 0 0 1.75rem;
+	padding: 1.25rem 1.5rem;
+	text-align: left;
+	background: #fff;
+	border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.checkout-thankyou__summary > div {
+	display: grid;
+	grid-template-columns: minmax(8rem, 40%) 1fr;
+	gap: 0.5rem 1rem;
+}
+
+.checkout-thankyou__summary dt {
+	margin: 0;
+	color: var(--ch-muted);
+	font-weight: 400;
+}
+
+.checkout-thankyou__summary dd {
+	margin: 0;
+	font-weight: 600;
+}
+
 /* Footer */
 .site-footer {
 	padding: 48px 0 32px;

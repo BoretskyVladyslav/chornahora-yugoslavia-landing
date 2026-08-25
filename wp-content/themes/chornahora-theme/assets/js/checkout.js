@@ -345,7 +345,7 @@
 					submitWayforpay(data);
 					return;
 				}
-				window.location.href = cfg.thankYouUrl || "/thank-you/";
+				window.location.href = data.thank_you_url || cfg.thankYouUrl || "/thank-you/";
 			})
 			.catch(function () {
 				statusEl.textContent = "Помилка з’єднання. Спробуйте ще раз.";

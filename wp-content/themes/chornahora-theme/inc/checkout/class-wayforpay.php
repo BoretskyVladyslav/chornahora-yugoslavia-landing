@@ -48,12 +48,71 @@ class Chornahora_Wayforpay {
 			'clientPhone'        => preg_replace( '/\D+/', '', $order['phone'] ),
 			'language'           => 'UA',
 			'serviceUrl'         => home_url( '/?ch_wfp=notify' ),
-			'returnUrl'          => chornahora_thankyou_url(),
+			'returnUrl'          => chornahora_thankyou_url( $order_id ),
 		);
 
 		return array(
 			'url'    => self::PURCHASE_URL,
 			'fields' => $fields,
 		);
+	}
+
+	public static function handle_notify() {
+		$raw  = file_get_contents( 'php://input' );
+		$data = json_decode( (string) $raw, true );
+
+		if ( ! is_array( $data ) || empty( $data['orderReference'] ) ) {
+			status_header( 400 );
+			echo wp_json_encode( array( 'error' => 'invalid_payload' ) );
+			exit;
+		}
+
+		$order_ref = sanitize_text_field( (string) $data['orderReference'] );
+		$received  = isset( $data['merchantSignature'] ) ? (string) $data['merchantSignature'] : '';
+		$expected  = self::notify_signature( $data );
+
+		if ( '' === $expected || ! hash_equals( $expected, $received ) ) {
+			status_header( 403 );
+			echo wp_json_encode( array( 'error' => 'invalid_signature' ) );
+			exit;
+		}
+
+		$txn_status = isset( $data['transactionStatus'] ) ? (string) $data['transactionStatus'] : '';
+
+		if ( 'Approved' === $txn_status ) {
+			Chornahora_Order_Processor::update_status( $order_ref, 'paid' );
+		} elseif ( in_array( $txn_status, array( 'Declined', 'Expired', 'Refunded', 'Voided' ), true ) ) {
+			Chornahora_Order_Processor::update_status( $order_ref, sanitize_key( strtolower( $txn_status ) ) );
+		}
+
+		$time      = time();
+		$reply_sig = hash_hmac( 'md5', $order_ref . ';accept;' . $time, CHORNAHORA_WFP_SECRET );
+
+		status_header( 200 );
+		header( 'Content-Type: application/json; charset=utf-8' );
+		echo wp_json_encode(
+			array(
+				'orderReference' => $order_ref,
+				'status'         => 'accept',
+				'time'           => $time,
+				'signature'      => $reply_sig,
+			)
+		);
+		exit;
+	}
+
+	private static function notify_signature( $data ) {
+		$parts = array(
+			isset( $data['merchantAccount'] ) ? $data['merchantAccount'] : '',
+			isset( $data['orderReference'] ) ? $data['orderReference'] : '',
+			isset( $data['amount'] ) ? $data['amount'] : '',
+			isset( $data['currency'] ) ? $data['currency'] : '',
+			isset( $data['authCode'] ) ? $data['authCode'] : '',
+			isset( $data['cardPan'] ) ? $data['cardPan'] : '',
+			isset( $data['transactionStatus'] ) ? $data['transactionStatus'] : '',
+			isset( $data['reasonCode'] ) ? $data['reasonCode'] : '',
+		);
+
+		return hash_hmac( 'md5', implode( ';', $parts ), CHORNAHORA_WFP_SECRET );
 	}
 }

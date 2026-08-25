@@ -12,15 +12,16 @@ class Chornahora_Order_Processor {
 			return $validated;
 		}
 
-		$validated['amount']        = CHORNAHORA_BOOK_PRICE;
-		$validated['currency']      = 'UAH';
-		$validated['product_name']  = 'Кривава агонія Югославії';
-		$validated['order_id']      = self::create_order_id();
-		$validated['created_at']    = gmdate( 'c' );
+		$validated['amount']       = CHORNAHORA_BOOK_PRICE;
+		$validated['currency']     = 'UAH';
+		$validated['product_name'] = 'Кривава агонія Югославії';
+		$validated['order_id']     = self::create_order_id();
+		$validated['created_at']   = wp_date( 'Y-m-d H:i:s' );
+		$validated['status']       = 'wayforpay' === $validated['payment'] ? 'pending_payment' : 'complete';
 
-		$name_parts               = preg_split( '/\s+/', $validated['full_name'], 2 );
-		$validated['first_name']  = isset( $name_parts[0] ) ? $name_parts[0] : $validated['full_name'];
-		$validated['last_name']   = isset( $name_parts[1] ) ? $name_parts[1] : '';
+		$name_parts              = preg_split( '/\s+/', $validated['full_name'], 2 );
+		$validated['first_name'] = isset( $name_parts[0] ) ? $name_parts[0] : $validated['full_name'];
+		$validated['last_name']  = isset( $name_parts[1] ) ? $name_parts[1] : '';
 
 		$post_id = wp_insert_post(
 			array(
@@ -45,10 +46,12 @@ class Chornahora_Order_Processor {
 		do_action( 'chornahora_order_created', $payload, $post_id );
 
 		$result = array(
-			'success'  => true,
-			'order_id' => $validated['order_id'],
-			'amount'   => $validated['amount'],
-			'payment'  => $validated['payment'],
+			'success'       => true,
+			'order_id'      => $validated['order_id'],
+			'amount'        => $validated['amount'],
+			'payment'       => $validated['payment'],
+			'status'        => $validated['status'],
+			'thank_you_url' => chornahora_thankyou_url( $validated['order_id'] ),
 		);
 
 		if ( 'wayforpay' === $validated['payment'] ) {
@@ -63,11 +66,11 @@ class Chornahora_Order_Processor {
 	public static function validate( $input ) {
 		$errors = array();
 
-		$full_name = sanitize_text_field( isset( $input['full_name'] ) ? $input['full_name'] : '' );
-		$email     = sanitize_email( isset( $input['email'] ) ? $input['email'] : '' );
-		$phone     = self::normalize_phone( isset( $input['phone'] ) ? $input['phone'] : '' );
-		$city      = sanitize_text_field( isset( $input['city'] ) ? $input['city'] : '' );
-		$city_ref  = sanitize_text_field( isset( $input['city_ref'] ) ? $input['city_ref'] : '' );
+		$full_name      = sanitize_text_field( isset( $input['full_name'] ) ? $input['full_name'] : '' );
+		$email          = sanitize_email( isset( $input['email'] ) ? $input['email'] : '' );
+		$phone          = self::normalize_phone( isset( $input['phone'] ) ? $input['phone'] : '' );
+		$city           = sanitize_text_field( isset( $input['city'] ) ? $input['city'] : '' );
+		$city_ref       = sanitize_text_field( isset( $input['city_ref'] ) ? $input['city_ref'] : '' );
 		$settlement_ref = sanitize_text_field( isset( $input['settlement_ref'] ) ? $input['settlement_ref'] : '' );
 		$warehouse_ref  = sanitize_text_field( isset( $input['warehouse_ref'] ) ? $input['warehouse_ref'] : '' );
 		$warehouse      = sanitize_text_field( isset( $input['warehouse_label'] ) ? $input['warehouse_label'] : '' );
@@ -135,41 +138,92 @@ class Chornahora_Order_Processor {
 		return '';
 	}
 
+	public static function payment_label( $payment ) {
+		return 'wayforpay' === $payment ? 'Оплатити на сайті' : 'Готівка при отриманні';
+	}
+
 	public static function sheets_payload( $order, $post_id ) {
 		return array(
-			'sheet_id'     => CHORNAHORA_SHEETS_ID,
-			'timestamp'    => $order['created_at'],
-			'order_id'     => $order['order_id'],
-			'wp_post_id'   => (int) $post_id,
-			'full_name'    => $order['full_name'],
-			'phone'        => $order['phone'],
-			'email'        => $order['email'],
-			'city'         => $order['city'],
-			'warehouse'    => $order['warehouse_label'],
-			'notes'        => isset( $order['notes'] ) ? $order['notes'] : '',
-			'payment'      => $order['payment'],
-			'delivery'     => 'Нова пошта',
-			'product'      => $order['product_name'],
-			'amount'       => (int) $order['amount'],
-			'currency'     => $order['currency'],
-			'status'       => 'wayforpay' === $order['payment'] ? 'pending_payment' : 'cod_pending',
+			'datetime'       => $order['created_at'],
+			'order_id'       => $order['order_id'],
+			'client_name'    => $order['full_name'],
+			'phone'          => $order['phone'],
+			'email'          => $order['email'],
+			'city'           => $order['city'],
+			'city_ref'       => $order['city_ref'],
+			'warehouse'      => $order['warehouse_label'],
+			'warehouse_ref'  => $order['warehouse_ref'],
+			'payment_method' => self::payment_label( $order['payment'] ),
+			'amount'         => (int) $order['amount'] . ' UAH',
+			'status'         => $order['status'],
+			'sheet_id'       => CHORNAHORA_SHEETS_ID,
+			'wp_post_id'     => (int) $post_id,
 		);
 	}
 
-	private static function send_notification_email( $order ) {
-		$payment_label = 'wayforpay' === $order['payment']
-			? 'Оплата на сайті (WayForPay)'
-			: 'Оплата під час отримання (НП післяплата)';
+	public static function find_by_order_id( $order_id ) {
+		$order_id = sanitize_text_field( (string) $order_id );
 
-		$lines = array(
+		if ( '' === $order_id ) {
+			return null;
+		}
+
+		$posts = get_posts(
+			array(
+				'post_type'      => 'ch_order',
+				'post_status'    => 'private',
+				'posts_per_page' => 1,
+				'meta_key'       => '_ch_order_id',
+				'meta_value'     => $order_id,
+			)
+		);
+
+		if ( empty( $posts ) ) {
+			return null;
+		}
+
+		$post_id = (int) $posts[0]->ID;
+
+		return array(
+			'post_id'         => $post_id,
+			'order_id'        => (string) get_post_meta( $post_id, '_ch_order_id', true ),
+			'full_name'       => (string) get_post_meta( $post_id, '_ch_full_name', true ),
+			'phone'           => (string) get_post_meta( $post_id, '_ch_phone', true ),
+			'email'           => (string) get_post_meta( $post_id, '_ch_email', true ),
+			'city'            => (string) get_post_meta( $post_id, '_ch_city', true ),
+			'city_ref'        => (string) get_post_meta( $post_id, '_ch_city_ref', true ),
+			'warehouse_label' => (string) get_post_meta( $post_id, '_ch_warehouse_label', true ),
+			'warehouse_ref'   => (string) get_post_meta( $post_id, '_ch_warehouse_ref', true ),
+			'payment'         => (string) get_post_meta( $post_id, '_ch_payment', true ),
+			'amount'          => (int) get_post_meta( $post_id, '_ch_amount', true ),
+			'status'          => (string) get_post_meta( $post_id, '_ch_status', true ),
+		);
+	}
+
+	public static function update_status( $order_id, $status ) {
+		$order = self::find_by_order_id( $order_id );
+
+		if ( ! $order ) {
+			return false;
+		}
+
+		update_post_meta( $order['post_id'], '_ch_status', sanitize_key( $status ) );
+
+		return true;
+	}
+
+	private static function send_notification_email( $order ) {
+		$payment_label = self::payment_label( $order['payment'] );
+		$lines         = array(
 			'Нове замовлення: ' . $order['order_id'],
+			'Статус: ' . $order['status'],
 			'Книга: ' . $order['product_name'],
-			'Сума: ' . $order['amount'] . ' грн',
+			'Сума: ' . $order['amount'] . ' UAH',
 			'ПІБ: ' . $order['full_name'],
 			'Телефон: ' . $order['phone'],
 			'Email: ' . $order['email'],
-			'Місто: ' . $order['city'],
-			'Відділення/поштомат: ' . $order['warehouse_label'],
+			'Місто: ' . $order['city'] . ' (ref: ' . $order['city_ref'] . ')',
+			'Відділення/поштомат: ' . $order['warehouse_label'] . ' (ref: ' . $order['warehouse_ref'] . ')',
 			'Оплата: ' . $payment_label,
 			'Коментар: ' . ( isset( $order['notes'] ) && '' !== $order['notes'] ? $order['notes'] : '—' ),
 		);
@@ -183,7 +237,10 @@ class Chornahora_Order_Processor {
 	}
 
 	private static function sync_google_sheets( $payload ) {
-		$url = apply_filters( 'chornahora_sheets_webhook', CHORNAHORA_SHEETS_WEBHOOK );
+		$url = apply_filters( 'CHORNAHORA_SHEETS_WEBHOOK_URL', CHORNAHORA_SHEETS_WEBHOOK_URL );
+		$url = apply_filters( 'chornahora_sheets_webhook', $url );
+		$url = apply_filters( 'chornahora_sheets_webhook_url', $url );
+		$url = esc_url_raw( (string) $url );
 
 		if ( '' === $url ) {
 			return;

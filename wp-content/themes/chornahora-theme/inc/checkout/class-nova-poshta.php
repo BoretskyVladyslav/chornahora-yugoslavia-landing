@@ -5,7 +5,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 class Chornahora_Nova_Poshta {
-	const API_URL = 'https://api.novaposhta.ua/v2.0/json/';
+	const API_URL     = 'https://api.novaposhta.ua/v2.0/json/';
+	const PAGE_LIMIT  = 500;
+	const MAX_PAGES   = 10;
+	const ALLOWED_CAT = array( 'branch', 'postomat' );
 
 	public static function search_cities( $query ) {
 		$query = trim( wp_strip_all_tags( (string) $query ) );
@@ -44,31 +47,51 @@ class Chornahora_Nova_Poshta {
 			return array();
 		}
 
-		$cache_key = 'ch_np_w_' . md5( $city_ref . '|' . $settlement_ref );
+		$cache_key = 'ch_np_w2_' . md5( $city_ref . '|' . $settlement_ref );
 		$cached    = get_transient( $cache_key );
 
 		if ( is_array( $cached ) ) {
 			return $cached;
 		}
 
-		$props = array(
-			'Limit' => '500',
-			'Page'  => '1',
-		);
+		$rows = self::fetch_warehouse_pages( $city_ref, $settlement_ref );
 
-		if ( '' !== $city_ref ) {
-			$props['CityRef'] = $city_ref;
+		if ( empty( $rows ) && '' !== $settlement_ref && '' !== $city_ref ) {
+			$rows = self::fetch_warehouse_pages( $city_ref, '' );
 		}
 
-		if ( '' !== $settlement_ref ) {
-			$props['SettlementRef'] = $settlement_ref;
-		}
-
-		$response   = self::request( 'AddressGeneral', 'getWarehouses', $props );
-		$warehouses = self::normalize_warehouses( $response );
+		$warehouses = self::normalize_warehouses( $rows );
 		set_transient( $cache_key, $warehouses, HOUR_IN_SECONDS );
 
 		return $warehouses;
+	}
+
+	private static function fetch_warehouse_pages( $city_ref, $settlement_ref ) {
+		$all = array();
+
+		for ( $page = 1; $page <= self::MAX_PAGES; $page++ ) {
+			$props = array(
+				'Limit' => (string) self::PAGE_LIMIT,
+				'Page'  => (string) $page,
+			);
+
+			if ( '' !== $city_ref ) {
+				$props['CityRef'] = $city_ref;
+			}
+
+			if ( '' !== $settlement_ref ) {
+				$props['SettlementRef'] = $settlement_ref;
+			}
+
+			$chunk = self::request( 'AddressGeneral', 'getWarehouses', $props );
+			$all   = array_merge( $all, $chunk );
+
+			if ( count( $chunk ) < self::PAGE_LIMIT ) {
+				break;
+			}
+		}
+
+		return $all;
 	}
 
 	private static function request( $model, $method, $properties ) {
@@ -157,11 +180,12 @@ class Chornahora_Nova_Poshta {
 			}
 
 			$description = isset( $row['Description'] ) ? (string) $row['Description'] : '';
-			$category    = isset( $row['CategoryOfWarehouse'] ) ? (string) $row['CategoryOfWarehouse'] : '';
 
-			if ( '' === $description ) {
+			if ( '' === $description || ! self::is_allowed_warehouse( $row ) ) {
 				continue;
 			}
+
+			$category = isset( $row['CategoryOfWarehouse'] ) ? (string) $row['CategoryOfWarehouse'] : '';
 
 			$out[] = array(
 				'ref'      => (string) $row['Ref'],
@@ -171,5 +195,31 @@ class Chornahora_Nova_Poshta {
 		}
 
 		return $out;
+	}
+
+	private static function is_allowed_warehouse( $row ) {
+		if ( isset( $row['DenyToSelect'] ) && '1' === (string) $row['DenyToSelect'] ) {
+			return false;
+		}
+
+		$status = isset( $row['WarehouseStatus'] ) ? strtolower( (string) $row['WarehouseStatus'] ) : 'working';
+
+		if ( '' !== $status && 'working' !== $status ) {
+			return false;
+		}
+
+		$category = isset( $row['CategoryOfWarehouse'] ) ? strtolower( (string) $row['CategoryOfWarehouse'] ) : '';
+
+		if ( 'cargo' === $category ) {
+			return false;
+		}
+
+		if ( in_array( $category, self::ALLOWED_CAT, true ) ) {
+			return true;
+		}
+
+		$description = isset( $row['Description'] ) ? (string) $row['Description'] : '';
+
+		return (bool) preg_match( '/відділення|поштомат/iu', $description );
 	}
 }
