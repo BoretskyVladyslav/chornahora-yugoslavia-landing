@@ -524,64 +524,15 @@ a {
 .checkout-page {
 	--ch-navy: #344974;
 	--ch-navy-hover: #273757;
-	--ch-ticket: #f7f7f7;
-	padding: 0 0 72px;
-}
-
-.checkout-notice {
-	background: #e8f5e9;
-	border-bottom: 1px solid #c8e6c9;
-	margin: 0 0 1.75rem;
-}
-
-.checkout-notice__inner {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	justify-content: space-between;
-	gap: 0.75rem 1rem;
-	padding: 0.85rem 0;
-}
-
-.checkout-notice__text {
-	margin: 0;
-	color: #1b5e20;
-	font-size: 15px;
-	line-height: 1.45;
-}
-
-.checkout-notice__check {
-	display: inline-block;
-	margin-right: 0.35rem;
-	font-weight: 700;
-	color: #2e7d32;
-}
-
-.checkout-notice__btn {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	min-height: 40px;
-	padding: 0.45rem 1.1rem;
-	background: var(--ch-navy);
-	color: #ffffff;
-	text-decoration: none;
-	font-size: 14px;
-	font-weight: 700;
-	white-space: nowrap;
-	border-radius: 0;
-}
-
-.checkout-notice__btn:hover,
-.checkout-notice__btn:focus-visible {
-	background: var(--ch-navy-hover);
-	color: #ffffff;
+	--ch-ticket: #ffffff;
+	padding: 40px 0 72px;
 }
 
 .checkout-steps {
 	margin: 0 0 2.5rem;
 	border: 1px solid #e5e7eb;
 	background: #fafafa;
+	overflow: hidden;
 }
 
 .checkout-steps__list {
@@ -600,22 +551,23 @@ a {
 	align-items: center;
 	justify-content: center;
 	gap: 0.55rem;
-	padding: 1rem 2rem 1rem 1rem;
+	padding: 1.05rem 2.4rem 1.05rem 1.5rem;
 	color: #9aa3af;
 	font-size: 14px;
 	font-weight: 500;
 }
 
 .checkout-steps__item:not(:last-child)::after {
-	content: "›";
+	content: "";
 	position: absolute;
-	right: 0.35rem;
-	top: 50%;
-	transform: translateY(-50%);
-	color: #c5cdd6;
-	font-size: 1.75rem;
-	font-weight: 400;
-	line-height: 1;
+	top: 0;
+	right: -14px;
+	z-index: 2;
+	width: 28px;
+	height: 100%;
+	background: #fafafa;
+	border-right: 1px solid #d1d5db;
+	transform: skewX(-22deg);
 	pointer-events: none;
 }
 
@@ -724,13 +676,15 @@ a {
 .checkout-field input.is-invalid,
 .checkout-field select.is-invalid,
 .checkout-field textarea.is-invalid {
-	border-color: var(--ch-accent);
+	border-color: #c1121f;
+	box-shadow: inset 0 0 0 1px #c1121f;
 }
 
 .checkout-field__error {
 	min-height: 1.1em;
 	font-size: 13px;
-	color: var(--ch-accent);
+	font-weight: 600;
+	color: #c1121f;
 }
 
 .checkout-field--radios {
@@ -855,33 +809,35 @@ a {
 }
 
 .checkout-box {
-	--ticket: #f7f7f7;
+	--ticket: #ffffff;
 	position: relative;
-	background: var(--ticket);
-	padding: 1.75rem 1.35rem 1.5rem;
-	margin: 0.75rem 0 1.75rem;
+	background: #ffffff;
+	border-left: 1px solid #e5e7eb;
+	border-right: 1px solid #e5e7eb;
+	padding: 2.25rem 2rem;
+	margin: 0.85rem 0 2rem;
 }
 
 .checkout-box::before,
 .checkout-box::after {
 	content: "";
 	position: absolute;
-	left: 0;
-	right: 0;
-	height: 10px;
+	left: -1px;
+	right: -1px;
+	height: 12px;
 	pointer-events: none;
 	background-repeat: repeat-x;
-	background-size: 16px 10px;
+	background-size: 16px 12px;
 }
 
 .checkout-box::before {
-	top: 0;
-	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='10' viewBox='0 0 16 10'%3E%3Cpath fill='%23ffffff' d='M0 0h16v10H0z'/%3E%3Cpath fill='%23f7f7f7' d='M0 10h16L8 0 0 10z'/%3E%3C/svg%3E");
+	top: -11px;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='12' viewBox='0 0 16 12'%3E%3Cpath fill='%23ffffff' d='M0 12L8 1l8 11H0z'/%3E%3Cpath fill='none' stroke='%23e5e7eb' stroke-width='1' d='M0 12L8 1l8 11'/%3E%3C/svg%3E");
 }
 
 .checkout-box::after {
-	bottom: 0;
-	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='10' viewBox='0 0 16 10'%3E%3Cpath fill='%23ffffff' d='M0 0h16v10H0z'/%3E%3Cpath fill='%23f7f7f7' d='M0 0h16L8 10 0 0z'/%3E%3C/svg%3E");
+	bottom: -11px;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='12' viewBox='0 0 16 12'%3E%3Cpath fill='%23ffffff' d='M0 0l8 11L16 0H0z'/%3E%3Cpath fill='none' stroke='%23e5e7eb' stroke-width='1' d='M0 0l8 11L16 0'/%3E%3C/svg%3E");
 }
 
 .checkout-box__row {
@@ -1206,11 +1162,6 @@ a {
 	}
 
 	.site-footer__inner {
-		flex-direction: column;
-		align-items: flex-start;
-	}
-
-	.checkout-notice__inner {
 		flex-direction: column;
 		align-items: flex-start;
 	}

@@ -67,6 +67,48 @@
 		return out;
 	}
 
+	function isCompletePhone(value) {
+		return /^\+380 \(\d{2}\) \d{3}-\d{2}-\d{2}$/.test(String(value || ""));
+	}
+
+	function isValidEmail(value) {
+		return /^[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}$/.test(String(value || "").trim());
+	}
+
+	function validateForm() {
+		var errors = {};
+		var fullName = String(form.full_name.value || "").trim();
+		var email = String(form.email.value || "").trim();
+		var city = String(form.city.value || "").trim();
+		var payment = (form.querySelector('input[name="payment"]:checked') || {}).value || "";
+
+		if (fullName.length < 2) {
+			errors.full_name = "Вкажіть ім'я та прізвище.";
+		}
+
+		if (!isCompletePhone(form.phone.value)) {
+			errors.phone = "Вкажіть телефон у форматі +380 (XX) XXX-XX-XX.";
+		}
+
+		if (!isValidEmail(email)) {
+			errors.email = "Вкажіть коректний email (наприклад, user@domain.com).";
+		}
+
+		if (!city || (!cityRef.value && !settlementRef.value)) {
+			errors.city = "Оберіть місто зі списку Нової пошти.";
+		}
+
+		if (!warehouse.value) {
+			errors.warehouse = "Оберіть відділення або поштомат.";
+		}
+
+		if (!payment) {
+			errors.payment = "Оберіть спосіб оплати.";
+		}
+
+		return errors;
+	}
+
 	function clearErrors() {
 		form.querySelectorAll(".checkout-field__error").forEach(function (el) {
 			el.textContent = "";
@@ -264,8 +306,10 @@
 		event.preventDefault();
 		clearErrors();
 
-		if (!cityRef.value && !settlementRef.value) {
-			showFieldErrors({ city: "Оберіть місто зі списку Нової пошти." });
+		var errors = validateForm();
+		if (Object.keys(errors).length) {
+			showFieldErrors(errors);
+			statusEl.textContent = "Перевірте поля форми.";
 			return;
 		}
 
@@ -274,15 +318,15 @@
 		statusEl.textContent = "Обробка замовлення…";
 
 		var payload = {
-			full_name: form.full_name.value,
+			full_name: String(form.full_name.value || "").trim(),
 			phone: form.phone.value,
-			email: form.email.value,
-			city: form.city.value,
+			email: String(form.email.value || "").trim(),
+			city: String(form.city.value || "").trim(),
 			city_ref: cityRef.value,
 			settlement_ref: settlementRef.value,
 			warehouse_ref: warehouse.value,
 			warehouse_label: warehouseLabel.value,
-			notes: form.notes ? form.notes.value : "",
+			notes: form.notes ? String(form.notes.value || "").trim() : "",
 			payment: (form.querySelector('input[name="payment"]:checked') || {}).value || "",
 		};
 
