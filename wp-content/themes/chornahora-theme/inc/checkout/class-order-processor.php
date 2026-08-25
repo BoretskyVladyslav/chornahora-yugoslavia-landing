@@ -72,6 +72,7 @@ class Chornahora_Order_Processor {
 		$warehouse_ref  = sanitize_text_field( isset( $input['warehouse_ref'] ) ? $input['warehouse_ref'] : '' );
 		$warehouse      = sanitize_text_field( isset( $input['warehouse_label'] ) ? $input['warehouse_label'] : '' );
 		$payment        = sanitize_key( isset( $input['payment'] ) ? $input['payment'] : '' );
+		$notes          = sanitize_textarea_field( isset( $input['notes'] ) ? $input['notes'] : '' );
 
 		if ( mb_strlen( $full_name ) < 2 ) {
 			$errors['full_name'] = 'Вкажіть прізвище та ім’я.';
@@ -111,6 +112,7 @@ class Chornahora_Order_Processor {
 			'warehouse_ref'   => $warehouse_ref,
 			'warehouse_label' => $warehouse,
 			'payment'         => $payment,
+			'notes'           => $notes,
 			'delivery'        => 'nova_poshta',
 		);
 	}
@@ -144,6 +146,7 @@ class Chornahora_Order_Processor {
 			'email'        => $order['email'],
 			'city'         => $order['city'],
 			'warehouse'    => $order['warehouse_label'],
+			'notes'        => isset( $order['notes'] ) ? $order['notes'] : '',
 			'payment'      => $order['payment'],
 			'delivery'     => 'Нова пошта',
 			'product'      => $order['product_name'],
@@ -168,6 +171,7 @@ class Chornahora_Order_Processor {
 			'Місто: ' . $order['city'],
 			'Відділення/поштомат: ' . $order['warehouse_label'],
 			'Оплата: ' . $payment_label,
+			'Коментар: ' . ( isset( $order['notes'] ) && '' !== $order['notes'] ? $order['notes'] : '—' ),
 		);
 
 		wp_mail(

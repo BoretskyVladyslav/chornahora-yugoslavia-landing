@@ -4,8 +4,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'CHORNAHORA_CHECKOUT_URL', 'https://rusova.chornahora.com.ua/' );
 define( 'CHORNAHORA_BOOK_PRICE', 550 );
+define( 'CHORNAHORA_PAGES_VERSION', 2 );
 define( 'CHORNAHORA_NP_API_KEY', 'b1c8fee45753bde5092988529e9f305b' );
 define( 'CHORNAHORA_ORDER_EMAIL', 'chornagorabook@gmail.com' );
 define( 'CHORNAHORA_SHEETS_ID', '1qVMbKvY5Bs6EGUGi-Y4mdbB5mCEviQn9bspCrNjsYM4' );
@@ -26,6 +26,14 @@ add_action( 'after_setup_theme', 'chornahora_theme_setup' );
 
 function chornahora_asset_uri( $path ) {
 	return get_template_directory_uri() . '/assets/' . ltrim( $path, '/' );
+}
+
+function chornahora_checkout_url() {
+	return home_url( '/checkout/' );
+}
+
+function chornahora_thankyou_url() {
+	return home_url( '/thank-you/' );
 }
 
 function chornahora_theme_scripts() {
@@ -52,6 +60,8 @@ function chornahora_theme_scripts() {
 		$version
 	);
 
+	$main_deps = array();
+
 	if ( is_front_page() ) {
 		wp_enqueue_style(
 			'swiper',
@@ -68,14 +78,18 @@ function chornahora_theme_scripts() {
 			true
 		);
 
-		wp_enqueue_script(
-			'chornahora-main',
-			chornahora_asset_uri( 'js/main.js' ),
-			array( 'swiper' ),
-			$version,
-			true
-		);
+		$main_deps[] = 'swiper';
+	}
 
+	wp_enqueue_script(
+		'chornahora-main',
+		chornahora_asset_uri( 'js/main.js' ),
+		$main_deps,
+		$version,
+		true
+	);
+
+	if ( is_page( 'checkout' ) ) {
 		wp_enqueue_script(
 			'chornahora-checkout',
 			chornahora_asset_uri( 'js/checkout.js' ),
@@ -88,18 +102,11 @@ function chornahora_theme_scripts() {
 			'chornahora-checkout',
 			'chCheckout',
 			array(
-				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
-				'nonce'   => wp_create_nonce( 'chornahora_checkout' ),
-				'amount'  => CHORNAHORA_BOOK_PRICE,
+				'ajaxUrl'     => admin_url( 'admin-ajax.php' ),
+				'nonce'       => wp_create_nonce( 'chornahora_checkout' ),
+				'amount'      => CHORNAHORA_BOOK_PRICE,
+				'thankYouUrl' => chornahora_thankyou_url(),
 			)
-		);
-	} else {
-		wp_enqueue_script(
-			'chornahora-main',
-			chornahora_asset_uri( 'js/main.js' ),
-			array(),
-			$version,
-			true
 		);
 	}
 }
@@ -150,6 +157,14 @@ function chornahora_bootstrap_pages() {
 			'title' => 'Контакти',
 			'slug'  => 'kontakty',
 		),
+		array(
+			'title' => 'Оформлення замовлення',
+			'slug'  => 'checkout',
+		),
+		array(
+			'title' => 'Замовлення отримано',
+			'slug'  => 'thank-you',
+		),
 	);
 
 	$home_id = 0;
@@ -187,5 +202,15 @@ function chornahora_bootstrap_pages() {
 	}
 
 	flush_rewrite_rules();
+	update_option( 'chornahora_pages_version', CHORNAHORA_PAGES_VERSION );
 }
 add_action( 'after_switch_theme', 'chornahora_bootstrap_pages' );
+
+function chornahora_maybe_bootstrap_pages() {
+	if ( (int) get_option( 'chornahora_pages_version', 0 ) >= CHORNAHORA_PAGES_VERSION ) {
+		return;
+	}
+
+	chornahora_bootstrap_pages();
+}
+add_action( 'init', 'chornahora_maybe_bootstrap_pages' );

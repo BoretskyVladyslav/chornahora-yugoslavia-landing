@@ -16,7 +16,6 @@
 	var warehouseLabel = document.getElementById("ch-warehouse-label");
 	var phone = document.getElementById("ch-phone");
 	var statusEl = form.querySelector("[data-form-status]");
-	var modal = document.getElementById("ch-checkout-modal");
 	var cityTimer = 0;
 	var cityCache = {};
 	var warehouseCache = {};
@@ -261,25 +260,6 @@
 		payForm.submit();
 	}
 
-	function openModal(message, orderId) {
-		if (!modal) {
-			return;
-		}
-		var title = modal.querySelector("#ch-checkout-modal-title");
-		var body = modal.querySelector("[data-modal-message]");
-		title.textContent = "Замовлення " + orderId + " прийнято";
-		body.textContent = message;
-		modal.hidden = false;
-	}
-
-	if (modal) {
-		modal.addEventListener("click", function (event) {
-			if (event.target === modal || event.target.hasAttribute("data-modal-close")) {
-				modal.hidden = true;
-			}
-		});
-	}
-
 	form.addEventListener("submit", function (event) {
 		event.preventDefault();
 		clearErrors();
@@ -302,6 +282,7 @@
 			settlement_ref: settlementRef.value,
 			warehouse_ref: warehouse.value,
 			warehouse_label: warehouseLabel.value,
+			notes: form.notes ? form.notes.value : "",
 			payment: (form.querySelector('input[name="payment"]:checked') || {}).value || "",
 		};
 
@@ -320,12 +301,7 @@
 					submitWayforpay(data);
 					return;
 				}
-				form.reset();
-				resetWarehouse();
-				phone.value = "";
-				submit.disabled = false;
-				statusEl.textContent = "";
-				openModal(data.message, data.order_id);
+				window.location.href = cfg.thankYouUrl || "/thank-you/";
 			})
 			.catch(function () {
 				statusEl.textContent = "Помилка з’єднання. Спробуйте ще раз.";

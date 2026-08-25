@@ -23,8 +23,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 					<span class="checkout-preview__price-value">550</span>
 					<span class="checkout-preview__price-currency">грн</span>
 				</p>
+				<a class="btn btn--primary" href="<?php echo esc_url( chornahora_checkout_url() ); ?>">ЗАМОВИТИ КНИГУ</a>
 			</div>
-			<?php get_template_part( 'template-parts/checkout-form' ); ?>
 		</div>
 	</div>
 </section>

@@ -48,7 +48,7 @@ class Chornahora_Wayforpay {
 			'clientPhone'        => preg_replace( '/\D+/', '', $order['phone'] ),
 			'language'           => 'UA',
 			'serviceUrl'         => home_url( '/?ch_wfp=notify' ),
-			'returnUrl'          => home_url( '/#order' ),
+			'returnUrl'          => chornahora_thankyou_url(),
 		);
 
 		return array(

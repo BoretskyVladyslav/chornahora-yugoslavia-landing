@@ -42,6 +42,7 @@ function ch_process_order() {
 		'warehouse_ref'    => isset( $_POST['warehouse_ref'] ) ? wp_unslash( $_POST['warehouse_ref'] ) : '',
 		'warehouse_label'  => isset( $_POST['warehouse_label'] ) ? wp_unslash( $_POST['warehouse_label'] ) : '',
 		'payment'          => isset( $_POST['payment'] ) ? wp_unslash( $_POST['payment'] ) : '',
+		'notes'            => isset( $_POST['notes'] ) ? wp_unslash( $_POST['notes'] ) : '',
 	);
 
 	$result = Chornahora_Order_Processor::process( $input );
