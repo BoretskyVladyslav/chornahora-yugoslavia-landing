@@ -7,7 +7,9 @@
 	if (navToggle && nav) {
 		navToggle.addEventListener("click", function () {
 			var open = nav.classList.toggle("is-open");
+			navToggle.classList.toggle("is-open", open);
 			navToggle.setAttribute("aria-expanded", open ? "true" : "false");
+			navToggle.setAttribute("aria-label", open ? "Close" : "Menu");
 		});
 	}
 

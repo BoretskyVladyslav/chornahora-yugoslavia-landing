@@ -8,7 +8,6 @@ define( 'CHORNAHORA_BOOK_PRICE', 550 );
 define( 'CHORNAHORA_PAGES_VERSION', 2 );
 define( 'CHORNAHORA_NP_API_KEY', 'b1c8fee45753bde5092988529e9f305b' );
 define( 'CHORNAHORA_ORDER_EMAIL', 'chornagorabook@gmail.com' );
-define( 'CHORNAHORA_CONTACT_PHONE', '+38 (067) 887-66-49' );
 define( 'CHORNAHORA_SHEETS_ID', '1qVMbKvY5Bs6EGUGi-Y4mdbB5mCEviQn9bspCrNjsYM4' );
 define( 'CHORNAHORA_SHEETS_WEBHOOK', '' );
 define( 'CHORNAHORA_WFP_MERCHANT', 'test_merch_n1' );
@@ -35,10 +34,6 @@ function chornahora_checkout_url() {
 
 function chornahora_thankyou_url() {
 	return home_url( '/thank-you/' );
-}
-
-function chornahora_is_checkout_flow() {
-	return is_page( array( 'checkout', 'thank-you' ) );
 }
 
 function chornahora_theme_scripts() {

@@ -6,7 +6,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 <header class="site-header">
 	<div class="container site-header__inner">
 		<a class="site-logo" href="<?php echo esc_url( home_url( '/' ) ); ?>">
-			<img src="<?php echo esc_url( chornahora_asset_uri( 'images/logo.png' ) ); ?>" alt="logo" width="72" height="90">
+			<img src="<?php echo esc_url( chornahora_asset_uri( 'images/logo.png' ) ); ?>" alt="logo" width="86" height="108">
 		</a>
 		<button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="Menu">
 			<span></span>
