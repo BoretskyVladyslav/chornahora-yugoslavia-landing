@@ -18,23 +18,23 @@ $slides = array(
 	),
 	array(
 		'file'    => 'map-4.png',
-		'caption' => '',
+		'caption' => 'Етнічна мапа Боснії і Герцеговини',
 	),
 	array(
 		'file'    => 'map-5.png',
-		'caption' => '',
+		'caption' => 'Боснія і Герцеговина після Дейтонських угод',
 	),
 	array(
 		'file'    => 'map-6.png',
-		'caption' => '',
+		'caption' => 'План розмежування Боснії та Герцеговини за мирним планом Венса-Оуена (1993)',
 	),
 	array(
 		'file'    => 'map-7.png',
-		'caption' => '',
+		'caption' => 'Автономний край Косово у складі Сербії',
 	),
 	array(
 		'file'    => 'map-8.png',
-		'caption' => '',
+		'caption' => 'Сучасна мапа Західних Балкан',
 	),
 );
 ?>
@@ -66,6 +66,7 @@ $slides = array(
 										loading="lazy"
 									>
 								</a>
+								<p class="maps-slider__caption" title="<?php echo esc_attr( $map_alt ); ?>"><?php echo esc_html( $map_alt ); ?></p>
 							</div>
 						<?php endforeach; ?>
 					</div>

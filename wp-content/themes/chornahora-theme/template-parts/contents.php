@@ -5,7 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 ?>
 <section id="contents" class="section contents">
 	<div class="container contents__layout">
-		<div>
+		<div class="contents__copy">
 			<h2 class="section__title">ЗМІСТ</h2>
 			<ul class="contents__list">
 				<li>● Етнічна картина Західних Балкан – національний склад,<br>мовна специфіка, історичні фактори</li>

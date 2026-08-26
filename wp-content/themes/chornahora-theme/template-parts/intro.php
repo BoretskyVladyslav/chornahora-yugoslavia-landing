@@ -24,7 +24,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 				'template-parts/video-blocks',
 				null,
 				array(
-					'modifier' => 'two',
+					'modifier' => 'three',
 					'videos'   => array(
 						array(
 							'id'    => '2QVJwoBHe2o',
@@ -32,6 +32,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 						),
 						array(
 							'id'    => 'HXo9Al2dUSU',
+							'title' => 'ПРО ЩО ЦЯ КНИГА',
+						),
+						array(
+							'id'    => 'gLINZdqcVEw',
 							'title' => 'ПРО ЩО ЦЯ КНИГА',
 						),
 					),
