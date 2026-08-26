@@ -1184,6 +1184,20 @@ body.nav-open {
 }
 
 @media (max-width: 768px) {
+	.hero {
+		min-height: 0;
+		width: 100%;
+		aspect-ratio: 16 / 9;
+		background-size: cover;
+		background-position: center top;
+		background-repeat: no-repeat;
+	}
+
+	.hero__inner {
+		min-height: 0;
+		height: 100%;
+	}
+
 	.checkout-steps {
 		overflow: visible;
 	}
