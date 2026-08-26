@@ -90,16 +90,6 @@
 					el: ".maps-slider__dots",
 					clickable: true,
 				},
-				breakpoints: {
-					768: {
-						slidesPerView: 2,
-						spaceBetween: 24,
-					},
-					1024: {
-						slidesPerView: 4,
-						spaceBetween: 20,
-					},
-				},
 			});
 		}
 	}

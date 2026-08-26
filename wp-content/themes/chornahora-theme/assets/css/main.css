@@ -366,23 +366,37 @@ body.nav-open {
 }
 
 .maps-slider > .container {
-	width: min(100% - 24px, 1400px);
-	max-width: 95vw;
+	width: min(100% - 24px, 1500px);
+	max-width: 96vw;
 }
 
 .maps-slider__frame {
 	position: relative;
-	padding-inline: 52px;
+}
+
+.maps-slider__stage {
+	position: relative;
+	padding-inline: 56px;
 }
 
 .maps-slider .swiper {
 	overflow: hidden;
 }
 
-.maps-slider__slide img {
-	width: 100%;
+.maps-slider__slide {
+	display: flex;
+	align-items: center;
+	justify-content: center;
 	height: auto;
-	aspect-ratio: 4 / 3;
+}
+
+.maps-slider__slide img {
+	display: block;
+	width: 100%;
+	max-width: 100%;
+	height: auto;
+	min-height: 240px;
+	aspect-ratio: 16 / 10;
 	object-fit: contain;
 	object-position: center center;
 	background: transparent;
@@ -391,18 +405,15 @@ body.nav-open {
 	-ms-interpolation-mode: bicubic;
 }
 
-.maps-slider__caption {
-	margin: 0.85rem 0 0;
-	padding: 0 0.25rem;
-	text-align: center;
-	color: var(--ch-muted);
-	font-size: 16px;
-	line-height: 1.45;
+.maps-slider__caption,
+.swiper-slide-caption {
+	display: none;
 }
 
 .maps-slider__nav {
 	position: absolute;
-	top: 32%;
+	top: 50%;
+	transform: translateY(-50%);
 	z-index: 2;
 	width: 44px;
 	height: 44px;
@@ -1153,6 +1164,10 @@ body.nav-open {
 	.checkout-layout {
 		grid-template-columns: 1fr 1fr;
 	}
+
+	.maps-slider__slide img {
+		min-height: 380px;
+	}
 }
 
 @media (min-width: 1024px) {
@@ -1184,6 +1199,10 @@ body.nav-open {
 		white-space: nowrap;
 		letter-spacing: 0.02em;
 		font-size: clamp(1.75rem, 2.4vw, 2.6rem);
+	}
+
+	.maps-slider__slide img {
+		min-height: 550px;
 	}
 }
 
@@ -1373,22 +1392,22 @@ body.nav-open {
 		color: var(--ch-text);
 	}
 
-	.maps-slider__frame {
-		padding-inline: 0;
+	.maps-slider__stage {
+		padding-inline: 44px;
 	}
 
 	.maps-slider__nav {
-		top: calc((100vw - 24px) / 3);
+		top: 50%;
 		transform: translateY(-50%);
 		bottom: auto;
 	}
 
 	.maps-slider__prev {
-		left: 8px;
+		left: 0;
 	}
 
 	.maps-slider__next {
-		right: 8px;
+		right: 0;
 	}
 
 	.maps-slider__dots.swiper-pagination,
