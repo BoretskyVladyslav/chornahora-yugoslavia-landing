@@ -8,26 +8,14 @@ get_header();
 <main id="main" class="site-main legal-page">
 	<article class="section legal-page__section">
 		<div class="container legal-page__inner">
-			<h1 class="legal-page__title">Контакти</h1>
-			<p>Звертайтесь, будь ласка, до нас, використовуючи:</p>
-			<dl class="legal-page__contacts">
-				<div>
-					<dt>Видавництво</dt>
-					<dd>ТОВ «Книжкове видавництво «Чорна гора»</dd>
-				</div>
-				<div>
-					<dt>Адреса</dt>
-					<dd>03113, м. Київ, вул. Дегтярівська, 43/1, оф. 24</dd>
-				</div>
-				<div>
-					<dt>Телефон</dt>
-					<dd><a href="tel:+380678876649">+38 (067) 887-66-49</a></dd>
-				</div>
-				<div>
-					<dt>E-mail</dt>
-					<dd><a href="mailto:<?php echo esc_attr( CHORNAHORA_ORDER_EMAIL ); ?>"><?php echo esc_html( CHORNAHORA_ORDER_EMAIL ); ?></a></dd>
-				</div>
-			</dl>
+			<h1>Контакти</h1>
+			<p>Видавництво «Чорна Гора»</p>
+			<p>З усіх питань щодо замовлень, доставки, співпраці та пропозицій звертайтесь, будь ласка, за нашими контактами:</p>
+			<ul>
+				<li><strong>Email:</strong> <a href="mailto:chornagorabook@gmail.com">chornagorabook@gmail.com</a></li>
+				<li><strong>Офіційний сайт видавництва:</strong> <a href="https://chornahora.com.ua/" target="_blank" rel="noopener">chornahora.com.ua</a></li>
+			</ul>
+			<p>Графік обробки замовлень: Понеділок – П'ятниця з 10:00 до 18:00.</p>
 		</div>
 	</article>
 </main>

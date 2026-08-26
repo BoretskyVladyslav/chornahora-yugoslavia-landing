@@ -1173,7 +1173,8 @@ body.nav-open {
 	margin-inline: auto;
 }
 
-.legal-page__title {
+.legal-page__title,
+.legal-page__inner > h1 {
 	margin: 0 0 1.75rem;
 	font-family: var(--ch-font-display);
 	font-weight: 600;
@@ -1184,7 +1185,8 @@ body.nav-open {
 	color: var(--ch-text);
 }
 
-.legal-page__title::after {
+.legal-page__title::after,
+.legal-page__inner > h1::after {
 	content: "";
 	display: block;
 	width: 60px;
@@ -1220,14 +1222,21 @@ body.nav-open {
 	color: var(--ch-accent-hover);
 }
 
-.legal-page__list {
+.legal-page__list,
+.legal-page__inner ul {
 	margin: 0 0 1.25rem;
 	padding-left: 1.35rem;
 }
 
-.legal-page__list ul {
+.legal-page__list ul,
+.legal-page__inner ul ul {
 	margin: 0.5rem 0 0;
 	padding-left: 1.25rem;
+}
+
+.legal-page__inner strong {
+	font-weight: 700;
+	color: var(--ch-text);
 }
 
 .legal-page__contacts {
