@@ -142,22 +142,51 @@ class Chornahora_Order_Processor {
 		return 'wayforpay' === $payment ? 'Оплатити на сайті' : 'Готівка при отриманні';
 	}
 
-	public static function sheets_payload( $order, $post_id ) {
+	public static function sheets_payment_method( $payment ) {
+		return 'wayforpay' === $payment ? 'WayForPay' : 'COD';
+	}
+
+	public static function sheets_status_label( $status, $payment = '' ) {
+		if ( 'paid' === $status ) {
+			return 'оплачено';
+		}
+
+		if ( 'pending_payment' === $status || 'wayforpay' === $payment ) {
+			return 'очікує оплати';
+		}
+
+		return 'нове';
+	}
+
+	public static function sheets_payload( $order, $post_id = 0 ) {
+		$created = isset( $order['created_at'] ) ? (string) $order['created_at'] : '';
+
+		if ( '' === $created ) {
+			$created = wp_date( 'Y-m-d H:i:s' );
+		}
+
+		$comment = '';
+		if ( isset( $order['notes'] ) ) {
+			$comment = (string) $order['notes'];
+		} elseif ( isset( $order['comment'] ) ) {
+			$comment = (string) $order['comment'];
+		}
+
 		return array(
-			'datetime'       => $order['created_at'],
-			'order_id'       => $order['order_id'],
-			'client_name'    => $order['full_name'],
-			'phone'          => $order['phone'],
-			'email'          => $order['email'],
-			'city'           => $order['city'],
-			'city_ref'       => $order['city_ref'],
-			'warehouse'      => $order['warehouse_label'],
-			'warehouse_ref'  => $order['warehouse_ref'],
-			'payment_method' => self::payment_label( $order['payment'] ),
-			'amount'         => (int) $order['amount'] . ' UAH',
-			'status'         => $order['status'],
-			'sheet_id'       => CHORNAHORA_SHEETS_ID,
-			'wp_post_id'     => (int) $post_id,
+			'datetime'       => $created,
+			'order_id'       => (string) $order['order_id'],
+			'client_name'    => (string) $order['full_name'],
+			'phone'          => (string) $order['phone'],
+			'email'          => (string) $order['email'],
+			'city'           => (string) $order['city'],
+			'warehouse'      => isset( $order['warehouse_label'] ) ? (string) $order['warehouse_label'] : '',
+			'payment_method' => self::sheets_payment_method( $order['payment'] ),
+			'amount'         => (int) ( isset( $order['amount'] ) ? $order['amount'] : CHORNAHORA_BOOK_PRICE ),
+			'status'         => self::sheets_status_label(
+				isset( $order['status'] ) ? $order['status'] : '',
+				isset( $order['payment'] ) ? $order['payment'] : ''
+			),
+			'comment'        => $comment,
 		);
 	}
 
@@ -197,6 +226,8 @@ class Chornahora_Order_Processor {
 			'payment'         => (string) get_post_meta( $post_id, '_ch_payment', true ),
 			'amount'          => (int) get_post_meta( $post_id, '_ch_amount', true ),
 			'status'          => (string) get_post_meta( $post_id, '_ch_status', true ),
+			'notes'           => (string) get_post_meta( $post_id, '_ch_notes', true ),
+			'created_at'      => (string) get_post_meta( $post_id, '_ch_created_at', true ),
 		);
 	}
 
@@ -207,7 +238,12 @@ class Chornahora_Order_Processor {
 			return false;
 		}
 
-		update_post_meta( $order['post_id'], '_ch_status', sanitize_key( $status ) );
+		$order['status'] = sanitize_key( $status );
+		update_post_meta( $order['post_id'], '_ch_status', $order['status'] );
+
+		if ( 'paid' === $order['status'] ) {
+			self::sync_google_sheets( self::sheets_payload( $order, $order['post_id'] ) );
+		}
 
 		return true;
 	}
@@ -246,16 +282,28 @@ class Chornahora_Order_Processor {
 			return;
 		}
 
-		wp_remote_post(
+		$body = wp_json_encode( $payload );
+
+		if ( false === $body ) {
+			error_log( 'Chornahora Sheets: failed to encode payload for order ' . ( isset( $payload['order_id'] ) ? $payload['order_id'] : '' ) );
+			return;
+		}
+
+		$response = wp_remote_post(
 			$url,
 			array(
-				'timeout' => 8,
-				'headers' => array(
-					'Content-Type' => 'application/json',
+				'timeout'  => 2,
+				'blocking' => false,
+				'headers'  => array(
+					'Content-Type' => 'application/json; charset=utf-8',
 				),
-				'body'    => wp_json_encode( $payload ),
+				'body'     => $body,
 			)
 		);
+
+		if ( is_wp_error( $response ) ) {
+			error_log( 'Chornahora Sheets webhook failed: ' . $response->get_error_message() );
+		}
 	}
 
 	private static function create_order_id() {
