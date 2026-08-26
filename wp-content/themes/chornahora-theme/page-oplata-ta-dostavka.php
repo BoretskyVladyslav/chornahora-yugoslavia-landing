@@ -1,15 +1,33 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 get_header();
 ?>
-<main id="main" class="site-main">
-	<?php
-	if ( have_posts() ) {
-		while ( have_posts() ) {
-			the_post();
-			the_content();
-		}
-	}
-	?>
+<main id="main" class="site-main legal-page">
+	<article class="section legal-page__section">
+		<div class="container legal-page__inner">
+			<h1 class="legal-page__title">Оплата та доставка</h1>
+			<h2>Правила оплати та доставки товару</h2>
+			<ol class="legal-page__list">
+				<li>Доставка книги відбувається через оператора Нова пошта.</li>
+				<li>
+					Оплата можлива двома способами:
+					<ul>
+						<li>онлайн на сайті через WayForPay (карткою або через інтернет-банкінг, без додаткової комісії);</li>
+						<li>готівка при отриманні у відділенні Нової пошти (карткою, готівкою, через застосунок НП).</li>
+					</ul>
+				</li>
+				<li>Ми обробляємо замовлення без дзвінків, автоматично.</li>
+				<li>Відстежити відправку замовлень можна через систему трекінгу Нової Пошти за номером відправлення, яке замовник отримує у вигляді смс-повідомлення (або у Viber, або у застосунку).</li>
+				<li>Посилки на відділенні Нової Пошти зберігаються 4 дні.</li>
+				<li>Вартість доставки: приблизно 65-70 грн (точна сума залежить від населеного пункту, куди здійснено замовлення).</li>
+			</ol>
+			<p>У разі виникнення запитань, звертайтесь, будь ласка:</p>
+			<p>E-mail: <a href="mailto:<?php echo esc_attr( CHORNAHORA_ORDER_EMAIL ); ?>"><?php echo esc_html( CHORNAHORA_ORDER_EMAIL ); ?></a></p>
+		</div>
+	</article>
 </main>
 <?php
 get_footer();
