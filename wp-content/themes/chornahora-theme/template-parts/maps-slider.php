@@ -5,27 +5,35 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 $slides = array(
 	array(
-		'file'    => 'slide-1.svg',
+		'file'    => 'map-1.png',
 		'caption' => 'Республіки, що входили до складу Соціалістичної Федеративної Республіки Югославія в 1991 році',
 	),
 	array(
-		'file'    => 'slide-2.svg',
+		'file'    => 'map-2.png',
 		'caption' => 'Етнічна мапа Югославії у 1991 році',
 	),
 	array(
-		'file'    => 'slide-3.svg',
+		'file'    => 'map-3.png',
 		'caption' => 'Самопроголошені Сербські автономні області на території Хорватії, 1991 рік',
 	),
 	array(
-		'file'    => 'slide-4.svg',
+		'file'    => 'map-4.png',
 		'caption' => '',
 	),
 	array(
-		'file'    => 'slide-5.svg',
+		'file'    => 'map-5.png',
 		'caption' => '',
 	),
 	array(
-		'file'    => 'slide-6.svg',
+		'file'    => 'map-6.png',
+		'caption' => '',
+	),
+	array(
+		'file'    => 'map-7.png',
+		'caption' => '',
+	),
+	array(
+		'file'    => 'map-8.png',
 		'caption' => '',
 	),
 );
@@ -41,8 +49,8 @@ $slides = array(
 							<img
 								src="<?php echo esc_url( chornahora_asset_uri( 'images/maps/' . $slide['file'] ) ); ?>"
 								alt="<?php echo esc_attr( $slide['caption'] ? $slide['caption'] : 'Map Slide ' . ( $index + 1 ) ); ?>"
-								width="1200"
-								height="800"
+								width="1334"
+								height="1000"
 								loading="lazy"
 							>
 							<?php if ( $slide['caption'] ) : ?>

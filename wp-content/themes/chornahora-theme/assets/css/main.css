@@ -381,10 +381,14 @@ body.nav-open {
 
 .maps-slider__slide img {
 	width: 100%;
-	aspect-ratio: 3 / 2;
-	object-fit: cover;
-	background: #eeeeee;
-	border-radius: 4px;
+	height: auto;
+	aspect-ratio: 4 / 3;
+	object-fit: contain;
+	object-position: center center;
+	background: transparent;
+	border-radius: 0;
+	image-rendering: auto;
+	-ms-interpolation-mode: bicubic;
 }
 
 .maps-slider__caption {
