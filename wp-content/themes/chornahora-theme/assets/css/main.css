@@ -395,8 +395,10 @@ body.nav-open {
 	width: 100%;
 	max-width: 100%;
 	height: auto;
-	min-height: 240px;
-	aspect-ratio: 16 / 10;
+	min-height: 0;
+	padding: 0.5rem;
+	box-sizing: border-box;
+	aspect-ratio: 4 / 3;
 	object-fit: contain;
 	object-position: center center;
 	background: transparent;
@@ -1166,7 +1168,8 @@ body.nav-open {
 	}
 
 	.maps-slider__slide img {
-		min-height: 380px;
+		min-height: 280px;
+		padding: 0.6rem;
 	}
 }
 
@@ -1202,7 +1205,8 @@ body.nav-open {
 	}
 
 	.maps-slider__slide img {
-		min-height: 550px;
+		min-height: 320px;
+		padding: 0.75rem;
 	}
 }
 

@@ -79,9 +79,10 @@
 		if (slider) {
 			new Swiper(slider, {
 				slidesPerView: 1,
-				spaceBetween: 16,
+				spaceBetween: 15,
 				loop: true,
 				watchOverflow: true,
+				centeredSlides: false,
 				navigation: {
 					nextEl: ".maps-slider__next",
 					prevEl: ".maps-slider__prev",
@@ -89,6 +90,18 @@
 				pagination: {
 					el: ".maps-slider__dots",
 					clickable: true,
+				},
+				breakpoints: {
+					768: {
+						slidesPerView: 2,
+						spaceBetween: 20,
+						centeredSlides: false,
+					},
+					1024: {
+						slidesPerView: 3,
+						spaceBetween: 30,
+						centeredSlides: false,
+					},
 				},
 			});
 		}
