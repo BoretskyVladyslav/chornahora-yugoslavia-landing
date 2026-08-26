@@ -357,7 +357,7 @@ body.nav-open {
 .yt-facade__play:hover::after,
 .yt-facade__play:focus-visible::after {
 	transform: translate(-50%, -50%) scale(1.1);
-	background-color: rgba(0, 0, 0, 0.85);
+	background-color: rgba(193, 18, 31, 0.85);
 }
 
 /* Maps slider */
@@ -389,9 +389,11 @@ body.nav-open {
 
 .maps-slider__caption {
 	margin: 0.85rem 0 0;
+	padding: 0 0.25rem;
 	text-align: center;
 	color: var(--ch-muted);
 	font-size: 16px;
+	line-height: 1.45;
 }
 
 .maps-slider__nav {
@@ -433,15 +435,24 @@ body.nav-open {
 	stroke-linejoin: round;
 }
 
+.maps-slider__dots.swiper-pagination,
 .maps-slider__dots {
-	margin-top: 1.5rem;
+	position: static;
+	bottom: auto;
+	left: auto;
+	width: 100%;
+	margin-top: 1.75rem;
 	display: flex;
 	justify-content: center;
+	align-items: center;
+	gap: 0.35rem;
+	transform: none;
 }
 
 .maps-slider__dots .swiper-pagination-bullet {
 	width: 10px;
 	height: 10px;
+	margin: 0 !important;
 	background: #cccccc;
 	opacity: 1;
 }
@@ -528,6 +539,10 @@ body.nav-open {
 	align-items: start;
 }
 
+.checkout-preview__info {
+	min-width: 0;
+}
+
 .checkout-preview__buy {
 	display: flex;
 	flex-direction: column;
@@ -566,9 +581,18 @@ body.nav-open {
 	margin: 0 0 0.35rem;
 }
 
+.checkout-preview__cover {
+	width: 100%;
+	max-width: 420px;
+	margin-left: auto;
+	margin-right: auto;
+}
+
 .checkout-preview__cover img {
 	margin-inline: auto;
+	width: 100%;
 	max-width: 420px;
+	height: auto;
 }
 
 .checkout-page {
@@ -1347,6 +1371,39 @@ body.nav-open {
 
 	.maps-slider__next {
 		right: 8px;
+	}
+
+	.maps-slider__dots.swiper-pagination,
+	.maps-slider__dots {
+		position: static;
+		margin-top: 1.5rem;
+	}
+
+	.checkout-preview__layout {
+		justify-items: center;
+		text-align: center;
+	}
+
+	.checkout-preview__cover,
+	.checkout-preview__info {
+		width: 100%;
+		max-width: 100%;
+		margin-left: auto;
+		margin-right: auto;
+		text-align: center;
+	}
+
+	.checkout-preview__meta {
+		text-align: center;
+	}
+
+	.checkout-preview__buy {
+		align-items: center;
+		width: 100%;
+	}
+
+	.checkout-preview__price {
+		justify-content: center;
 	}
 
 	.site-footer__inner {

@@ -8,7 +8,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 		<div class="checkout-preview__cover">
 			<img src="<?php echo esc_url( chornahora_asset_uri( 'images/cta-book.jpg' ) ); ?>" alt="Illustration" width="420" height="560" loading="lazy">
 		</div>
-		<div>
+		<div class="checkout-preview__info">
 			<ul class="checkout-preview__meta">
 				<li>Автор: Олександр Ткаченко</li>
 				<li>Видавництво: «Чорна гора»</li>
