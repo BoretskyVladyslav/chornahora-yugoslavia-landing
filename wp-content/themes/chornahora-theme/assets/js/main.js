@@ -87,12 +87,14 @@
 	if (typeof Swiper !== "undefined") {
 		var slider = document.querySelector(".maps-swiper");
 		if (slider) {
-			new Swiper(slider, {
+			var mapsSwiper = new Swiper(slider, {
 				slidesPerView: 1,
 				spaceBetween: 12,
 				loop: true,
 				watchOverflow: true,
 				centeredSlides: false,
+				preventClicks: true,
+				preventClicksPropagation: true,
 				navigation: {
 					nextEl: ".maps-slider__next",
 					prevEl: ".maps-slider__prev",
@@ -114,6 +116,71 @@
 					},
 				},
 			});
+
+			if (typeof Fancybox !== "undefined") {
+				var fancyboxOpts = {
+					startIndex: 0,
+					theme: "dark",
+					backdropClick: "close",
+					contentClick: "iterateZoom",
+					placeFocusBack: false,
+					Images: {
+						zoom: true,
+						Panzoom: {
+							maxScale: 5,
+							panMode: "drag",
+							touch: true,
+							mouseMovePan: true,
+							wheel: "zoom",
+						},
+					},
+					Toolbar: {
+						display: {
+							left: [],
+							middle: [],
+							right: ["zoomIn", "zoomOut", "close"],
+						},
+					},
+				};
+
+				function uniqueMapItems() {
+					var seen = {};
+					var items = [];
+					slider
+						.querySelectorAll(".swiper-slide:not(.swiper-slide-duplicate) a[data-fancybox='maps']")
+						.forEach(function (link) {
+							var src = link.getAttribute("href");
+							if (!src || seen[src]) {
+								return;
+							}
+							seen[src] = true;
+							var img = link.querySelector("img");
+							items.push({
+								src: src,
+								type: "image",
+								caption: link.getAttribute("data-caption") || (img ? img.alt : "") || "",
+							});
+						});
+					return items;
+				}
+
+				slider.addEventListener("click", function (event) {
+					var link = event.target.closest("a[data-fancybox='maps']");
+					if (!link) {
+						return;
+					}
+					event.preventDefault();
+					if (mapsSwiper.animating || mapsSwiper.allowClick === false) {
+						return;
+					}
+					var items = uniqueMapItems();
+					var start = items.findIndex(function (item) {
+						return item.src === link.getAttribute("href");
+					});
+					fancyboxOpts.startIndex = start < 0 ? 0 : start;
+					Fancybox.show(items, fancyboxOpts);
+				});
+			}
 		}
 	}
 

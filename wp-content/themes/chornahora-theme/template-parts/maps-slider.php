@@ -46,14 +46,26 @@ $slides = array(
 				<div class="swiper maps-swiper">
 					<div class="swiper-wrapper">
 						<?php foreach ( $slides as $index => $slide ) : ?>
+							<?php
+							$map_src = chornahora_asset_uri( 'images/maps/' . $slide['file'] );
+							$map_alt = $slide['caption'] ? $slide['caption'] : 'Map Slide ' . ( $index + 1 );
+							?>
 							<div class="swiper-slide maps-slider__slide">
-								<img
-									src="<?php echo esc_url( chornahora_asset_uri( 'images/maps/' . $slide['file'] ) ); ?>"
-									alt="<?php echo esc_attr( $slide['caption'] ? $slide['caption'] : 'Map Slide ' . ( $index + 1 ) ); ?>"
-									width="1334"
-									height="1000"
-									loading="lazy"
+								<a
+									class="glightbox maps-slider__zoom"
+									href="<?php echo esc_url( $map_src ); ?>"
+									data-gallery="maps"
+									data-fancybox="maps"
+									data-caption="<?php echo esc_attr( $map_alt ); ?>"
 								>
+									<img
+										src="<?php echo esc_url( $map_src ); ?>"
+										alt="<?php echo esc_attr( $map_alt ); ?>"
+										width="1334"
+										height="1000"
+										loading="lazy"
+									>
+								</a>
 							</div>
 						<?php endforeach; ?>
 					</div>

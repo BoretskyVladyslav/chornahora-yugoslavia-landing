@@ -395,6 +395,14 @@ body.nav-open {
 	height: auto;
 }
 
+.maps-slider__zoom {
+	display: block;
+	width: 100%;
+	cursor: zoom-in;
+	text-decoration: none;
+	color: inherit;
+}
+
 .maps-slider__slide img {
 	display: block;
 	width: 100%;
@@ -410,6 +418,7 @@ body.nav-open {
 	border-radius: 0;
 	image-rendering: auto;
 	-ms-interpolation-mode: bicubic;
+	pointer-events: none;
 }
 
 .maps-slider__caption,
@@ -481,6 +490,18 @@ body.nav-open {
 
 .maps-slider__dots .swiper-pagination-bullet-active {
 	background: #333333;
+}
+
+.fancybox__container {
+	z-index: 100010;
+}
+
+.fancybox__backdrop {
+	background: rgba(0, 0, 0, 0.9) !important;
+}
+
+.fancybox__toolbar {
+	justify-content: flex-end;
 }
 
 /* Quote */

@@ -119,7 +119,23 @@ function chornahora_theme_scripts() {
 			true
 		);
 
+		wp_enqueue_style(
+			'fancybox',
+			'https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0.36/dist/fancybox/fancybox.css',
+			array(),
+			'5.0.36'
+		);
+
+		wp_enqueue_script(
+			'fancybox',
+			'https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0.36/dist/fancybox/fancybox.umd.js',
+			array(),
+			'5.0.36',
+			true
+		);
+
 		$main_deps[] = 'swiper';
+		$main_deps[] = 'fancybox';
 	}
 
 	wp_enqueue_script(
