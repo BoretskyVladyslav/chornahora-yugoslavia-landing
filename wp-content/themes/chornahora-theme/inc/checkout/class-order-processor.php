@@ -42,7 +42,7 @@ class Chornahora_Order_Processor {
 
 		$payload = self::sheets_payload( $validated, $post_id );
 		self::send_notification_email( $validated );
-		self::sync_google_sheets( $payload );
+		self::send_to_google_sheets( $payload );
 		do_action( 'chornahora_order_created', $payload, $post_id );
 
 		$result = array(
@@ -242,7 +242,7 @@ class Chornahora_Order_Processor {
 		update_post_meta( $order['post_id'], '_ch_status', $order['status'] );
 
 		if ( 'paid' === $order['status'] ) {
-			self::sync_google_sheets( self::sheets_payload( $order, $order['post_id'] ) );
+			self::send_to_google_sheets( self::sheets_payload( $order, $order['post_id'] ) );
 		}
 
 		return true;
@@ -272,38 +272,44 @@ class Chornahora_Order_Processor {
 		);
 	}
 
-	private static function sync_google_sheets( $payload ) {
+	public static function send_to_google_sheets( $payload, $blocking = false ) {
 		$url = apply_filters( 'CHORNAHORA_SHEETS_WEBHOOK_URL', CHORNAHORA_SHEETS_WEBHOOK_URL );
 		$url = apply_filters( 'chornahora_sheets_webhook', $url );
 		$url = apply_filters( 'chornahora_sheets_webhook_url', $url );
 		$url = esc_url_raw( (string) $url );
 
 		if ( '' === $url ) {
-			return;
+			$error = new WP_Error( 'sheets_url_missing', 'CHORNAHORA_SHEETS_WEBHOOK_URL is not defined.' );
+			error_log( 'Chornahora Sheets webhook failed: ' . $error->get_error_message() );
+			return $error;
 		}
 
 		$body = wp_json_encode( $payload );
 
 		if ( false === $body ) {
+			$error = new WP_Error( 'sheets_encode_failed', 'Failed to encode Google Sheets payload.' );
 			error_log( 'Chornahora Sheets: failed to encode payload for order ' . ( isset( $payload['order_id'] ) ? $payload['order_id'] : '' ) );
-			return;
+			return $error;
 		}
 
 		$response = wp_remote_post(
 			$url,
 			array(
-				'timeout'  => 2,
-				'blocking' => false,
-				'headers'  => array(
-					'Content-Type' => 'application/json; charset=utf-8',
+				'timeout'     => $blocking ? 20 : 2,
+				'blocking'    => (bool) $blocking,
+				'redirection' => 0,
+				'headers'     => array(
+					'Content-Type' => 'text/plain; charset=utf-8',
 				),
-				'body'     => $body,
+				'body'        => $body,
 			)
 		);
 
 		if ( is_wp_error( $response ) ) {
 			error_log( 'Chornahora Sheets webhook failed: ' . $response->get_error_message() );
 		}
+
+		return $response;
 	}
 
 	private static function create_order_id() {

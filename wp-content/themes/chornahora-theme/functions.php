@@ -32,6 +32,10 @@ require get_template_directory() . '/inc/checkout/class-wayforpay.php';
 require get_template_directory() . '/inc/checkout/class-order-processor.php';
 require get_template_directory() . '/inc/checkout/ajax.php';
 
+function send_to_google_sheets( $payload, $blocking = false ) {
+	return Chornahora_Order_Processor::send_to_google_sheets( $payload, $blocking );
+}
+
 function chornahora_theme_setup() {
 	add_theme_support( 'title-tag' );
 	add_theme_support( 'html5', array( 'search-form', 'comment-form', 'comment-list', 'gallery', 'caption', 'style', 'script' ) );

@@ -10,7 +10,7 @@
  * 4. Copy the web app URL into wp-config.php:
  *    define( 'CHORNAHORA_SHEETS_WEBHOOK_URL', 'https://script.google.com/macros/s/.../exec' );
  *
- * Incoming JSON keys:
+ * Incoming JSON keys (POST body as text/plain JSON):
  * datetime, order_id, client_name, phone, email, city, warehouse,
  * payment_method, amount, status, comment
  */
