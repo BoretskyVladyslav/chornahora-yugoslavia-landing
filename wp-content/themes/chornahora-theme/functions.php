@@ -42,6 +42,16 @@ function chornahora_asset_uri( $path ) {
 	return get_template_directory_uri() . '/assets/' . ltrim( $path, '/' );
 }
 
+function chornahora_asset_version( $relative_path ) {
+	$path = get_theme_file_path( $relative_path );
+
+	if ( $path && file_exists( $path ) ) {
+		return (string) filemtime( $path );
+	}
+
+	return (string) wp_get_theme()->get( 'Version' );
+}
+
 function chornahora_checkout_url() {
 	return home_url( '/checkout/' );
 }
@@ -66,8 +76,6 @@ function chornahora_handle_wfp_notify() {
 add_action( 'init', 'chornahora_handle_wfp_notify', 0 );
 
 function chornahora_theme_scripts() {
-	$version = wp_get_theme()->get( 'Version' );
-
 	wp_enqueue_style(
 		'chornahora-fonts',
 		'https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Roboto:ital,wght@0,400;0,700;1,400&family=Teko:wght@600;700&display=swap',
@@ -79,14 +87,14 @@ function chornahora_theme_scripts() {
 		'chornahora-theme',
 		get_stylesheet_uri(),
 		array( 'chornahora-fonts' ),
-		$version
+		chornahora_asset_version( 'style.css' )
 	);
 
 	wp_enqueue_style(
 		'chornahora-main',
 		chornahora_asset_uri( 'css/main.css' ),
 		array( 'chornahora-theme' ),
-		$version
+		chornahora_asset_version( 'assets/css/main.css' )
 	);
 
 	$main_deps = array();
@@ -114,7 +122,7 @@ function chornahora_theme_scripts() {
 		'chornahora-main',
 		chornahora_asset_uri( 'js/main.js' ),
 		$main_deps,
-		$version,
+		chornahora_asset_version( 'assets/js/main.js' ),
 		true
 	);
 
@@ -123,7 +131,7 @@ function chornahora_theme_scripts() {
 			'chornahora-checkout',
 			chornahora_asset_uri( 'js/checkout.js' ),
 			array(),
-			$version,
+			chornahora_asset_version( 'assets/js/checkout.js' ),
 			true
 		);
 
