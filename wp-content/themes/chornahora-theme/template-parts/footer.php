@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 				<ul>
 					<li><a href="<?php echo esc_url( home_url( '/oplata-ta-dostavka/' ) ); ?>">Оплата та доставка</a></li>
 					<li><a href="<?php echo esc_url( home_url( '/povernennya/' ) ); ?>">Повернення</a></li>
-					<li><a href="<?php echo esc_url( home_url( '/politika-konfidenciynosti/' ) ); ?>">Політика  конфіденційності</a></li>
+					<li><a href="<?php echo esc_url( home_url( '/politika-konfidenciynosti/' ) ); ?>">Політика конфіденційності</a></li>
 					<li><a href="<?php echo esc_url( home_url( '/kontakty/' ) ); ?>">Контакти</a></li>
 				</ul>
 			</nav>

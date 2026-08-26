@@ -74,12 +74,22 @@
 		mq.addListener(placeNav);
 	}
 
+	var header = document.querySelector(".site-header");
+	function syncHeaderScroll() {
+		if (!header) {
+			return;
+		}
+		header.classList.toggle("is-scrolled", window.scrollY > 4);
+	}
+	syncHeaderScroll();
+	window.addEventListener("scroll", syncHeaderScroll, { passive: true });
+
 	if (typeof Swiper !== "undefined") {
 		var slider = document.querySelector(".maps-swiper");
 		if (slider) {
 			new Swiper(slider, {
 				slidesPerView: 1,
-				spaceBetween: 15,
+				spaceBetween: 12,
 				loop: true,
 				watchOverflow: true,
 				centeredSlides: false,
@@ -94,12 +104,12 @@
 				breakpoints: {
 					768: {
 						slidesPerView: 2,
-						spaceBetween: 20,
+						spaceBetween: 16,
 						centeredSlides: false,
 					},
 					1024: {
 						slidesPerView: 3,
-						spaceBetween: 30,
+						spaceBetween: 24,
 						centeredSlides: false,
 					},
 				},
