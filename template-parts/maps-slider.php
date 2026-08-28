@@ -48,6 +48,9 @@ $slides = array(
 						<?php foreach ( $slides as $index => $slide ) : ?>
 							<?php
 							$map_src = chornahora_asset_uri( 'images/maps/' . $slide['file'] );
+							if ( '' === $map_src ) {
+								continue;
+							}
 							$map_alt = $slide['caption'] ? $slide['caption'] : 'Map Slide ' . ( $index + 1 );
 							?>
 							<div class="swiper-slide maps-slider__slide">

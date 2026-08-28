@@ -27,7 +27,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 			</ul>
 		</div>
 		<div class="contents__map">
-			<img src="<?php echo esc_url( chornahora_asset_uri( 'images/contents-map.jpg' ) ); ?>" alt="Illustration" width="800" height="800" loading="lazy">
+			<?php $contents_map = chornahora_asset_uri( 'images/contents-map.jpg' ); ?>
+			<?php if ( $contents_map ) : ?>
+				<img src="<?php echo esc_url( $contents_map ); ?>" alt="Illustration" width="800" height="800" loading="lazy">
+			<?php endif; ?>
 		</div>
 	</div>
 	<div class="container">

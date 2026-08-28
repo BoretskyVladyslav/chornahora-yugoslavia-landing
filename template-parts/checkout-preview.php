@@ -6,7 +6,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 <section id="order" class="section checkout-preview">
 	<div class="container checkout-preview__layout">
 		<div class="checkout-preview__cover">
-			<img src="<?php echo esc_url( chornahora_asset_uri( 'images/cta-book.jpg' ) ); ?>" alt="Illustration" width="420" height="560" loading="lazy">
+			<?php $book_cover = chornahora_asset_uri( 'images/cta-book.jpg' ); ?>
+			<?php if ( $book_cover ) : ?>
+				<img src="<?php echo esc_url( $book_cover ); ?>" alt="Illustration" width="420" height="560" loading="lazy">
+			<?php endif; ?>
 		</div>
 		<div class="checkout-preview__info">
 			<ul class="checkout-preview__meta">

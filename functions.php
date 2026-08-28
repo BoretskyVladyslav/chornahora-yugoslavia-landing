@@ -24,6 +24,9 @@ if ( ! defined( 'CHORNAHORA_MAIL_FROM_NAME' ) ) {
 
 if ( ! defined( 'CHORNAHORA_SHEETS_WEBHOOK_URL' ) ) {
 	$legacy_sheets = defined( 'CHORNAHORA_SHEETS_WEBHOOK' ) ? CHORNAHORA_SHEETS_WEBHOOK : '';
+	if ( '' === (string) $legacy_sheets ) {
+		$legacy_sheets = 'https://script.google.com/macros/s/AKfycbyHOZDuBG9jXdb054JqUbVZHRzkIUR6u38LnhMmFgKrqnwvVe6f8Obc2yPCrh6_WvoM1g/exec';
+	}
 	define( 'CHORNAHORA_SHEETS_WEBHOOK_URL', $legacy_sheets );
 }
 
@@ -39,10 +42,19 @@ if ( ! defined( 'CHORNAHORA_WFP_SECRET' ) ) {
 	define( 'CHORNAHORA_WFP_SECRET', 'flk3409refn54t54t*FNJRET' );
 }
 
-require get_template_directory() . '/inc/checkout/class-nova-poshta.php';
-require get_template_directory() . '/inc/checkout/class-wayforpay.php';
-require get_template_directory() . '/inc/checkout/class-order-processor.php';
-require get_template_directory() . '/inc/checkout/ajax.php';
+$ch_requires = array(
+	'/inc/checkout/class-nova-poshta.php',
+	'/inc/checkout/class-wayforpay.php',
+	'/inc/checkout/class-order-processor.php',
+	'/inc/checkout/ajax.php',
+);
+
+foreach ( $ch_requires as $ch_file ) {
+	$ch_path = get_template_directory() . $ch_file;
+	if ( is_readable( $ch_path ) ) {
+		require $ch_path;
+	}
+}
 
 function send_to_google_sheets( $payload, $blocking = false ) {
 	return Chornahora_Order_Processor::send_to_google_sheets( $payload, $blocking );
@@ -54,8 +66,29 @@ function chornahora_theme_setup() {
 }
 add_action( 'after_setup_theme', 'chornahora_theme_setup' );
 
+function chornahora_https_url( $url ) {
+	$url = (string) $url;
+
+	if ( '' === $url ) {
+		return '';
+	}
+
+	return set_url_scheme( $url, 'https' );
+}
+
+function chornahora_theme_file_uri( $relative ) {
+	$relative = ltrim( (string) $relative, '/' );
+	$path     = get_theme_file_path( $relative );
+
+	if ( ! $path || ! file_exists( $path ) ) {
+		return '';
+	}
+
+	return chornahora_https_url( get_template_directory_uri() . '/' . $relative );
+}
+
 function chornahora_asset_uri( $path ) {
-	return get_template_directory_uri() . '/assets/' . ltrim( $path, '/' );
+	return chornahora_theme_file_uri( 'assets/' . ltrim( (string) $path, '/' ) );
 }
 
 function chornahora_asset_version( $relative_path ) {
@@ -66,6 +99,30 @@ function chornahora_asset_version( $relative_path ) {
 	}
 
 	return (string) wp_get_theme()->get( 'Version' );
+}
+
+function chornahora_enqueue_style_file( $handle, $relative, $deps = array() ) {
+	$uri = chornahora_theme_file_uri( $relative );
+
+	if ( '' === $uri ) {
+		return false;
+	}
+
+	wp_enqueue_style( $handle, $uri, $deps, chornahora_asset_version( $relative ) );
+
+	return true;
+}
+
+function chornahora_enqueue_script_file( $handle, $relative, $deps = array(), $in_footer = true ) {
+	$uri = chornahora_theme_file_uri( $relative );
+
+	if ( '' === $uri ) {
+		return false;
+	}
+
+	wp_enqueue_script( $handle, $uri, $deps, chornahora_asset_version( $relative ), $in_footer );
+
+	return true;
 }
 
 function chornahora_checkout_url() {
@@ -87,6 +144,11 @@ function chornahora_handle_wfp_notify() {
 		return;
 	}
 
+	if ( ! class_exists( 'Chornahora_Wayforpay' ) ) {
+		status_header( 500 );
+		exit;
+	}
+
 	Chornahora_Wayforpay::handle_notify();
 }
 add_action( 'init', 'chornahora_handle_wfp_notify', 0 );
@@ -94,38 +156,27 @@ add_action( 'init', 'chornahora_handle_wfp_notify', 0 );
 function chornahora_theme_scripts() {
 	wp_enqueue_style(
 		'chornahora-fonts',
-		'https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Roboto:ital,wght@0,400;0,700;1,400&family=Teko:wght@600;700&display=swap',
+		chornahora_https_url( 'https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Roboto:ital,wght@0,400;0,700;1,400&family=Teko:wght@600;700&display=swap' ),
 		array(),
 		null
 	);
 
-	wp_enqueue_style(
-		'chornahora-theme',
-		get_stylesheet_uri(),
-		array( 'chornahora-fonts' ),
-		chornahora_asset_version( 'style.css' )
-	);
-
-	wp_enqueue_style(
-		'chornahora-main',
-		chornahora_asset_uri( 'css/main.css' ),
-		array( 'chornahora-theme' ),
-		chornahora_asset_version( 'assets/css/main.css' )
-	);
+	chornahora_enqueue_style_file( 'chornahora-theme', 'style.css', array( 'chornahora-fonts' ) );
+	chornahora_enqueue_style_file( 'chornahora-main', 'assets/css/main.css', array( 'chornahora-theme' ) );
 
 	$main_deps = array();
 
 	if ( is_front_page() ) {
 		wp_enqueue_style(
 			'swiper',
-			'https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css',
+			chornahora_https_url( 'https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css' ),
 			array(),
 			'11'
 		);
 
 		wp_enqueue_script(
 			'swiper',
-			'https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js',
+			chornahora_https_url( 'https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js' ),
 			array(),
 			'11',
 			true
@@ -133,14 +184,14 @@ function chornahora_theme_scripts() {
 
 		wp_enqueue_style(
 			'fancybox',
-			'https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0.36/dist/fancybox/fancybox.css',
+			chornahora_https_url( 'https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0.36/dist/fancybox/fancybox.css' ),
 			array(),
 			'5.0.36'
 		);
 
 		wp_enqueue_script(
 			'fancybox',
-			'https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0.36/dist/fancybox/fancybox.umd.js',
+			chornahora_https_url( 'https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0.36/dist/fancybox/fancybox.umd.js' ),
 			array(),
 			'5.0.36',
 			true
@@ -150,28 +201,14 @@ function chornahora_theme_scripts() {
 		$main_deps[] = 'fancybox';
 	}
 
-	wp_enqueue_script(
-		'chornahora-main',
-		chornahora_asset_uri( 'js/main.js' ),
-		$main_deps,
-		chornahora_asset_version( 'assets/js/main.js' ),
-		true
-	);
+	chornahora_enqueue_script_file( 'chornahora-main', 'assets/js/main.js', $main_deps, true );
 
-	if ( is_page( 'checkout' ) ) {
-		wp_enqueue_script(
-			'chornahora-checkout',
-			chornahora_asset_uri( 'js/checkout.js' ),
-			array(),
-			chornahora_asset_version( 'assets/js/checkout.js' ),
-			true
-		);
-
+	if ( is_page( 'checkout' ) && chornahora_enqueue_script_file( 'chornahora-checkout', 'assets/js/checkout.js', array(), true ) ) {
 		wp_localize_script(
 			'chornahora-checkout',
 			'chCheckout',
 			array(
-				'ajaxUrl'     => admin_url( 'admin-ajax.php' ),
+				'ajaxUrl'     => chornahora_https_url( admin_url( 'admin-ajax.php' ) ),
 				'nonce'       => wp_create_nonce( 'chornahora_checkout' ),
 				'amount'      => CHORNAHORA_BOOK_PRICE,
 				'thankYouUrl' => chornahora_thankyou_url(),

@@ -5,8 +5,7 @@ WordPress landing page for the Chornahora publishing house book *Yugoslavia*. Cu
 ## Stack
 
 - WordPress
-- WooCommerce
-- Custom theme: `wp-content/themes/chornahora-theme/`
+- Custom theme (this repository is the WordPress theme; place the folder in `wp-content/themes/`)
 
 ## Landing page (7 sections)
 

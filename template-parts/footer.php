@@ -7,7 +7,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 	<div class="container site-footer__inner">
 		<div class="site-footer__brand">
 			<a class="site-logo" href="https://chornahora.com.ua/">
-				<img src="<?php echo esc_url( chornahora_asset_uri( 'images/logo.png' ) ); ?>" alt="logo" width="88" height="110">
+				<?php $logo_url = chornahora_asset_uri( 'images/logo.png' ); ?>
+				<?php if ( $logo_url ) : ?>
+					<img src="<?php echo esc_url( $logo_url ); ?>" alt="logo" width="88" height="110">
+				<?php endif; ?>
 			</a>
 		</div>
 		<div class="site-footer__cluster">
