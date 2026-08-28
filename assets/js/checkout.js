@@ -17,11 +17,13 @@
 	var phone = document.getElementById("ch-phone");
 	var statusEl = form.querySelector("[data-form-status]");
 	var cityTimer = 0;
+	var lastSelectedLabel = "";
+	var activeCities = [];
+	var activeIndex = -1;
+	var CITY_DEBOUNCE_MS = 300;
 	var cityCache = {};
 	var warehouseCache = {};
 	var abortCity = null;
-	var matchedCities = [];
-	var autoSelectPending = false;
 
 	function setStatus(text) {
 		if (statusEl) {
@@ -141,72 +143,114 @@
 		});
 	}
 
+	function clearFieldError(key) {
+		var holder = form.querySelector('[data-error-for="' + key + '"]');
+		var input = form.querySelector('[name="' + (key === "warehouse" ? "warehouse_ref" : key) + '"]');
+		if (holder) {
+			holder.textContent = "";
+		}
+		if (input) {
+			input.classList.remove("is-invalid");
+		}
+	}
+
+	function escapeHtml(value) {
+		return String(value || "")
+			.replace(/&/g, "&amp;")
+			.replace(/</g, "&lt;")
+			.replace(/>/g, "&gt;")
+			.replace(/"/g, "&quot;");
+	}
+
+	function highlightMatch(label, query) {
+		var text = String(label || "");
+		var q = String(query || "").trim();
+		if (!q) {
+			return escapeHtml(text);
+		}
+		var idx = text.toLowerCase().indexOf(q.toLowerCase());
+		if (idx === -1) {
+			return escapeHtml(text);
+		}
+		return (
+			escapeHtml(text.slice(0, idx)) +
+			"<mark>" +
+			escapeHtml(text.slice(idx, idx + q.length)) +
+			"</mark>" +
+			escapeHtml(text.slice(idx + q.length))
+		);
+	}
+
 	function hideSuggest() {
 		suggest.hidden = true;
 		suggest.innerHTML = "";
+		suggest.style.display = "none";
+		activeCities = [];
+		activeIndex = -1;
 	}
 
-	function hasSelectedCity() {
-		return Boolean(cityRef.value || settlementRef.value);
+	function applySuggestStyles() {
+		suggest.style.position = "absolute";
+		suggest.style.left = "0";
+		suggest.style.width = "100%";
+		suggest.style.zIndex = "99999";
+		suggest.style.background = "#fff";
+		suggest.style.border = "1px solid #ccc";
+		suggest.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)";
+		suggest.style.maxHeight = "250px";
+		suggest.style.overflowY = "auto";
+		suggest.style.top = "100%";
+		suggest.style.display = "block";
+		suggest.style.margin = "0";
+		suggest.style.padding = "0.25rem 0";
+		suggest.style.listStyle = "none";
 	}
 
-	function renderCities(cities) {
-		matchedCities = cities.slice();
+	function setActiveItem(index) {
+		var items = suggest.querySelectorAll("li");
+		if (!items.length) {
+			activeIndex = -1;
+			return;
+		}
+		activeIndex = (index + items.length) % items.length;
+		items.forEach(function (item, i) {
+			item.classList.toggle("is-active", i === activeIndex);
+			item.setAttribute("aria-selected", i === activeIndex ? "true" : "false");
+			if (i === activeIndex && item.scrollIntoView) {
+				item.scrollIntoView({ block: "nearest" });
+			}
+		});
+	}
+
+	function renderCities(cities, query) {
 		suggest.innerHTML = "";
-		if (!cities.length) {
+		activeCities = cities || [];
+		activeIndex = activeCities.length ? 0 : -1;
+		if (!activeCities.length) {
 			hideSuggest();
 			return;
 		}
-		cities.forEach(function (city, index) {
+		activeCities.forEach(function (city, index) {
 			var li = document.createElement("li");
 			li.setAttribute("role", "option");
-			li.textContent = city.label;
+			li.innerHTML = highlightMatch(city.label, query);
 			if (index === 0) {
-				li.className = "is-active";
+				li.classList.add("is-active");
+				li.setAttribute("aria-selected", "true");
 			}
 			li.addEventListener("mousedown", function (event) {
 				event.preventDefault();
-				autoSelectPending = false;
+				selectCity(city);
+			});
+			li.addEventListener("click", function (event) {
+				event.preventDefault();
 				selectCity(city);
 			});
 			suggest.appendChild(li);
 		});
 		suggest.hidden = false;
-	}
-
-	function selectCity(city) {
-		if (!city) {
-			return;
-		}
-		autoSelectPending = false;
-		cityInput.value = city.label;
-		cityRef.value = city.city_ref || "";
-		settlementRef.value = city.settlement_ref || "";
-		hideSuggest();
-		loadWarehouses();
-	}
-
-	function selectFirstCity() {
-		if (hasSelectedCity()) {
-			hideSuggest();
-			return true;
-		}
-		if (!matchedCities.length) {
-			return false;
-		}
-		selectCity(matchedCities[0]);
-		return true;
-	}
-
-	function commitCityFromList() {
-		if (hasSelectedCity()) {
-			hideSuggest();
-			return;
-		}
-		if (selectFirstCity()) {
-			return;
-		}
-		autoSelectPending = cityInput.value.trim().length >= 2;
+		suggest.removeAttribute("hidden");
+		applySuggestStyles();
 	}
 
 	function resetWarehouse() {
@@ -226,9 +270,25 @@
 		warehouse.disabled = list.length === 0;
 	}
 
-	function loadWarehouses() {
-		var key = (cityRef.value || "") + "|" + (settlementRef.value || "");
-		if (!cityRef.value && !settlementRef.value) {
+	function selectCity(city) {
+		if (!city) {
+			return;
+		}
+		lastSelectedLabel = city.label;
+		cityInput.value = city.label;
+		cityRef.value = city.city_ref || city.Ref || "";
+		settlementRef.value = city.settlement_ref || city.SettlementRef || city.ref || "";
+		hideSuggest();
+		clearFieldError("city");
+		clearFieldError("warehouse");
+		fetchWarehouses(city.city_ref || city.settlement_ref || city.ref || "");
+	}
+
+	function fetchWarehouses(ref) {
+		var city_ref = cityRef.value || ref || "";
+		var settlement_ref = settlementRef.value || "";
+		var key = city_ref + "|" + settlement_ref;
+		if (!city_ref && !settlement_ref) {
 			resetWarehouse();
 			return;
 		}
@@ -239,8 +299,8 @@
 		warehouse.disabled = true;
 		warehouse.innerHTML = '<option value="">Завантаження…</option>';
 		post("ch_get_warehouses", {
-			city_ref: cityRef.value,
-			settlement_ref: settlementRef.value,
+			city_ref: city_ref,
+			settlement_ref: settlement_ref,
 		}).then(function (json) {
 			var list = json.success && json.data ? json.data.warehouses || [] : [];
 			warehouseCache[key] = list;
@@ -251,25 +311,59 @@
 		});
 	}
 
-	function searchCities() {
-		var query = cityInput.value.trim();
-		cityRef.value = "";
-		settlementRef.value = "";
-		resetWarehouse();
-		if (query.length < 2) {
-			matchedCities = [];
-			autoSelectPending = false;
+	function bestCityMatch(query) {
+		var q = String(query || "").trim().toLowerCase();
+		if (!activeCities.length) {
+			return null;
+		}
+		if (activeIndex >= 0 && activeCities[activeIndex]) {
+			return activeCities[activeIndex];
+		}
+		var exact = null;
+		var starts = null;
+		activeCities.forEach(function (city) {
+			var label = String(city.label || "").toLowerCase();
+			if (!exact && label === q) {
+				exact = city;
+			}
+			if (!starts && label.indexOf(q) === 0) {
+				starts = city;
+			}
+		});
+		return exact || starts || activeCities[0];
+	}
+
+	function commitCityFromSuggest() {
+		if (lastSelectedLabel && cityInput.value.trim() === lastSelectedLabel && (cityRef.value || settlementRef.value)) {
 			hideSuggest();
 			return;
 		}
-		if (cityCache[query]) {
-			matchedCities = cityCache[query].slice();
-			if (autoSelectPending) {
-				autoSelectPending = false;
-				selectFirstCity();
-				return;
+		var city = bestCityMatch(cityInput.value);
+		if (city) {
+			selectCity(city);
+			return;
+		}
+		hideSuggest();
+	}
+
+	function searchCities() {
+		var query = cityInput.value.trim();
+		if (query.length < 2) {
+			hideSuggest();
+			if (!lastSelectedLabel || query !== lastSelectedLabel) {
+				cityRef.value = "";
+				settlementRef.value = "";
+				resetWarehouse();
 			}
-			renderCities(cityCache[query]);
+			return;
+		}
+		if (query !== lastSelectedLabel) {
+			cityRef.value = "";
+			settlementRef.value = "";
+			resetWarehouse();
+		}
+		if (cityCache[query]) {
+			renderCities(cityCache[query], query);
 			return;
 		}
 		if (abortCity) {
@@ -292,16 +386,9 @@
 			.then(function (json) {
 				var cities = json.success && json.data ? json.data.cities || [] : [];
 				cityCache[query] = cities;
-				if (cityInput.value.trim() !== query) {
-					return;
+				if (cityInput.value.trim() === query) {
+					renderCities(cities, query);
 				}
-				matchedCities = cities.slice();
-				if (autoSelectPending) {
-					autoSelectPending = false;
-					selectFirstCity();
-					return;
-				}
-				renderCities(cities);
 			})
 			.catch(function (err) {
 				if (err && err.name === "AbortError") {
@@ -311,25 +398,69 @@
 			});
 	}
 
+	function scheduleSearch() {
+		window.clearTimeout(cityTimer);
+		cityTimer = window.setTimeout(searchCities, CITY_DEBOUNCE_MS);
+	}
+
+	var skipSearchKeys = {
+		ArrowDown: true,
+		ArrowUp: true,
+		Enter: true,
+		Escape: true,
+		Tab: true,
+		Shift: true,
+		Control: true,
+		Alt: true,
+		Meta: true,
+	};
+
 	phone.addEventListener("input", function () {
 		phone.value = formatPhone(phone.value);
 	});
 
-	cityInput.addEventListener("input", function () {
-		window.clearTimeout(cityTimer);
-		cityTimer = window.setTimeout(searchCities, 320);
+	["input", "keyup", "paste", "change", "focus"].forEach(function (evt) {
+		cityInput.addEventListener(evt, function (event) {
+			if (evt === "keyup" && event.key && skipSearchKeys[event.key]) {
+				return;
+			}
+			if (evt === "paste") {
+				window.setTimeout(scheduleSearch, 0);
+				return;
+			}
+			scheduleSearch();
+		});
 	});
 
 	cityInput.addEventListener("keydown", function (event) {
-		if (event.key !== "Enter") {
+		if (event.key === "ArrowDown") {
+			event.preventDefault();
+			if (suggest.hidden) {
+				scheduleSearch();
+				return;
+			}
+			setActiveItem(activeIndex + 1);
 			return;
 		}
-		event.preventDefault();
-		commitCityFromList();
+		if (event.key === "ArrowUp") {
+			event.preventDefault();
+			if (!suggest.hidden) {
+				setActiveItem(activeIndex - 1);
+			}
+			return;
+		}
+		if (event.key === "Enter") {
+			event.preventDefault();
+			commitCityFromSuggest();
+			return;
+		}
+		if (event.key === "Escape") {
+			hideSuggest();
+		}
 	});
 
 	cityInput.addEventListener("blur", function () {
-		commitCityFromList();
+		window.setTimeout(commitCityFromSuggest, 180);
 	});
 
 	warehouse.addEventListener("change", function () {
@@ -372,7 +503,7 @@
 	form.addEventListener("submit", function (event) {
 		event.preventDefault();
 		clearErrors();
-		commitCityFromList();
+		commitCityFromSuggest();
 
 		var errors = validateForm();
 		if (Object.keys(errors).length) {

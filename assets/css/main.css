@@ -25,7 +25,6 @@ html {
 
 body {
 	margin: 0;
-	min-height: 100%;
 	min-height: 100vh;
 	display: flex;
 	flex-direction: column;
@@ -34,6 +33,14 @@ body {
 	font-family: var(--ch-font-body);
 	font-size: 18px;
 	line-height: 1.65;
+}
+
+main {
+	flex: 1 0 auto;
+}
+
+footer {
+	flex-shrink: 0;
 }
 
 img {
@@ -85,6 +92,10 @@ a {
 	overflow-x: clip;
 }
 
+.site-main.checkout-page {
+	overflow: visible;
+}
+
 .section {
 	padding: 72px 0;
 	background: var(--ch-bg);
@@ -107,6 +118,7 @@ a {
 	position: sticky;
 	top: 0;
 	z-index: 1000;
+	flex-shrink: 0;
 	overflow: visible;
 	background: #1c1c1c;
 	border-bottom: 1px solid rgba(255, 255, 255, 0.08);
@@ -942,24 +954,29 @@ body.nav-open {
 	position: relative;
 }
 
+.checkout-field--suggest {
+	overflow: visible;
+	z-index: 20;
+}
+
 .checkout-suggest {
 	position: absolute;
 	left: 0;
-	right: 0;
-	top: calc(100% + 4px);
-	z-index: 9999;
+	top: 100%;
+	width: 100%;
+	z-index: 99999;
 	margin: 0;
 	padding: 0.25rem 0;
 	list-style: none;
-	background: #ffffff;
-	border: 1px solid #d1d5db;
-	max-height: 280px;
-	overflow: auto;
-	box-shadow: 0 12px 32px rgba(17, 24, 39, 0.16);
+	background: #fff;
+	border: 1px solid #ccc;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+	max-height: 250px;
+	overflow-y: auto;
 }
 
-.checkout-suggest[hidden] {
-	display: none;
+.checkout-suggest:not([hidden]) {
+	display: block;
 }
 
 .checkout-suggest li {
@@ -972,6 +989,13 @@ body.nav-open {
 .checkout-suggest li:focus,
 .checkout-suggest li.is-active {
 	background: #f3f4f6;
+}
+
+.checkout-suggest mark {
+	padding: 0;
+	background: #ffe08a;
+	color: inherit;
+	font-weight: 700;
 }
 
 .checkout-form__status {
