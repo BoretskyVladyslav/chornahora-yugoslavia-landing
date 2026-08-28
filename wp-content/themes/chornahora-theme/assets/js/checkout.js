@@ -17,6 +17,12 @@
 	var phone = document.getElementById("ch-phone");
 	var statusEl = form.querySelector("[data-form-status]");
 	var cityTimer = 0;
+
+	function setStatus(text) {
+		if (statusEl) {
+			statusEl.textContent = text;
+		}
+	}
 	var cityCache = {};
 	var warehouseCache = {};
 	var abortCity = null;
@@ -116,7 +122,7 @@
 		form.querySelectorAll(".is-invalid").forEach(function (el) {
 			el.classList.remove("is-invalid");
 		});
-		statusEl.textContent = "";
+		setStatus("");
 	}
 
 	function showFieldErrors(fields) {
@@ -203,7 +209,7 @@
 			fillWarehouses(list);
 		}).catch(function () {
 			resetWarehouse();
-			statusEl.textContent = "Не вдалося завантажити відділення. Спробуйте ще раз.";
+			setStatus("Не вдалося завантажити відділення. Спробуйте ще раз.");
 		});
 	}
 
@@ -273,7 +279,7 @@
 	function submitWayforpay(payload) {
 		var wfp = payload.wayforpay;
 		if (!wfp || !wfp.url || !wfp.fields) {
-			statusEl.textContent = "Не вдалося підготувати оплату WayForPay.";
+			setStatus("Не вдалося підготувати оплату WayForPay.");
 			return;
 		}
 		var payForm = document.createElement("form");
@@ -309,13 +315,13 @@
 		var errors = validateForm();
 		if (Object.keys(errors).length) {
 			showFieldErrors(errors);
-			statusEl.textContent = "Перевірте поля форми.";
+			setStatus("Перевірте поля форми.");
 			return;
 		}
 
 		var submit = form.querySelector(".checkout-form__submit");
 		submit.disabled = true;
-		statusEl.textContent = "Обробка замовлення…";
+		setStatus("Обробка замовлення…");
 
 		var payload = {
 			full_name: String(form.full_name.value || "").trim(),
@@ -335,20 +341,20 @@
 				if (!json.success) {
 					var err = json.data || {};
 					showFieldErrors(err.fields || {});
-					statusEl.textContent = err.message || "Перевірте поля форми.";
+					setStatus(err.message || "Перевірте поля форми.");
 					submit.disabled = false;
 					return;
 				}
 				var data = json.data;
 				if (data.payment === "wayforpay") {
-					statusEl.textContent = "Перехід до оплати…";
+					setStatus("Перехід до оплати…");
 					submitWayforpay(data);
 					return;
 				}
 				window.location.href = data.thank_you_url || cfg.thankYouUrl || "/thank-you/";
 			})
 			.catch(function () {
-				statusEl.textContent = "Помилка з’єднання. Спробуйте ще раз.";
+				setStatus("Помилка з’єднання. Спробуйте ще раз.");
 				submit.disabled = false;
 			});
 	});

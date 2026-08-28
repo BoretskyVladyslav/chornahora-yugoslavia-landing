@@ -10,6 +10,18 @@ define( 'CHORNAHORA_NP_API_KEY', 'b1c8fee45753bde5092988529e9f305b' );
 define( 'CHORNAHORA_ORDER_EMAIL', 'chornagorabook@gmail.com' );
 define( 'CHORNAHORA_SHEETS_ID', '1qVMbKvY5Bs6EGUGi-Y4mdbB5mCEviQn9bspCrNjsYM4' );
 
+if ( ! defined( 'CHORNAHORA_MAIL_FROM' ) ) {
+	define( 'CHORNAHORA_MAIL_FROM', 'order@yugoslavia.chornahora.com.ua' );
+}
+
+if ( ! defined( 'CHORNAHORA_MAIL_FROM_FALLBACK' ) ) {
+	define( 'CHORNAHORA_MAIL_FROM_FALLBACK', 'wordpress@yugoslavia.chornahora.com.ua' );
+}
+
+if ( ! defined( 'CHORNAHORA_MAIL_FROM_NAME' ) ) {
+	define( 'CHORNAHORA_MAIL_FROM_NAME', 'Видавництво Чорна Гора' );
+}
+
 if ( ! defined( 'CHORNAHORA_SHEETS_WEBHOOK_URL' ) ) {
 	$legacy_sheets = defined( 'CHORNAHORA_SHEETS_WEBHOOK' ) ? CHORNAHORA_SHEETS_WEBHOOK : '';
 	define( 'CHORNAHORA_SHEETS_WEBHOOK_URL', $legacy_sheets );

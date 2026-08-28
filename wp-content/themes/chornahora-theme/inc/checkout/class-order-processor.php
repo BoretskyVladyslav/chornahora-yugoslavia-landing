@@ -40,8 +40,13 @@ class Chornahora_Order_Processor {
 			update_post_meta( $post_id, '_ch_' . $key, $value );
 		}
 
-		$payload = self::sheets_payload( $validated, $post_id );
-		self::send_notification_email( $validated );
+		$validated['post_id'] = (int) $post_id;
+		$payload              = self::sheets_payload( $validated, $post_id );
+
+		if ( 'wayforpay' !== $validated['payment'] ) {
+			self::send_notification_email( $validated );
+		}
+
 		self::send_to_google_sheets( $payload );
 		do_action( 'chornahora_order_created', $payload, $post_id );
 
@@ -213,6 +218,12 @@ class Chornahora_Order_Processor {
 
 		$post_id = (int) $posts[0]->ID;
 
+		$product_name = (string) get_post_meta( $post_id, '_ch_product_name', true );
+
+		if ( '' === $product_name ) {
+			$product_name = 'Кривава агонія Югославії';
+		}
+
 		return array(
 			'post_id'         => $post_id,
 			'order_id'        => (string) get_post_meta( $post_id, '_ch_order_id', true ),
@@ -228,6 +239,7 @@ class Chornahora_Order_Processor {
 			'status'          => (string) get_post_meta( $post_id, '_ch_status', true ),
 			'notes'           => (string) get_post_meta( $post_id, '_ch_notes', true ),
 			'created_at'      => (string) get_post_meta( $post_id, '_ch_created_at', true ),
+			'product_name'    => $product_name,
 		);
 	}
 
@@ -242,6 +254,7 @@ class Chornahora_Order_Processor {
 		update_post_meta( $order['post_id'], '_ch_status', $order['status'] );
 
 		if ( 'paid' === $order['status'] ) {
+			self::send_notification_email( $order );
 			self::send_to_google_sheets( self::sheets_payload( $order, $order['post_id'] ) );
 		}
 
@@ -249,27 +262,102 @@ class Chornahora_Order_Processor {
 	}
 
 	private static function send_notification_email( $order ) {
-		$payment_label = self::payment_label( $order['payment'] );
-		$lines         = array(
-			'Нове замовлення: ' . $order['order_id'],
-			'Статус: ' . $order['status'],
-			'Книга: ' . $order['product_name'],
-			'Сума: ' . $order['amount'] . ' UAH',
-			'ПІБ: ' . $order['full_name'],
-			'Телефон: ' . $order['phone'],
-			'Email: ' . $order['email'],
-			'Місто: ' . $order['city'] . ' (ref: ' . $order['city_ref'] . ')',
-			'Відділення/поштомат: ' . $order['warehouse_label'] . ' (ref: ' . $order['warehouse_ref'] . ')',
-			'Оплата: ' . $payment_label,
-			'Коментар: ' . ( isset( $order['notes'] ) && '' !== $order['notes'] ? $order['notes'] : '—' ),
+		$post_id = isset( $order['post_id'] ) ? (int) $order['post_id'] : 0;
+
+		if ( $post_id > 0 && (string) get_post_meta( $post_id, '_ch_email_sent', true ) === '1' ) {
+			return;
+		}
+
+		if ( $post_id > 0 ) {
+			update_post_meta( $post_id, '_ch_email_sent', '1' );
+		}
+
+		$html     = self::notification_email_html( $order );
+		$order_id = isset( $order['order_id'] ) ? (string) $order['order_id'] : '';
+
+		self::send_html_mail(
+			CHORNAHORA_ORDER_EMAIL,
+			'Нове замовлення ' . $order_id,
+			$html
 		);
 
+		$client_email = isset( $order['email'] ) ? sanitize_email( (string) $order['email'] ) : '';
+
+		if ( is_email( $client_email ) ) {
+			self::send_html_mail(
+				$client_email,
+				'Ваше замовлення ' . $order_id,
+				$html
+			);
+		}
+	}
+
+	private static function mail_from_address() {
+		$from = defined( 'CHORNAHORA_MAIL_FROM' ) ? CHORNAHORA_MAIL_FROM : '';
+
+		if ( is_email( $from ) ) {
+			return $from;
+		}
+
+		$fallback = defined( 'CHORNAHORA_MAIL_FROM_FALLBACK' ) ? CHORNAHORA_MAIL_FROM_FALLBACK : 'wordpress@yugoslavia.chornahora.com.ua';
+
+		return is_email( $fallback ) ? $fallback : 'wordpress@yugoslavia.chornahora.com.ua';
+	}
+
+	private static function send_html_mail( $to, $subject, $html ) {
+		$from_email = self::mail_from_address();
+		$from_name  = defined( 'CHORNAHORA_MAIL_FROM_NAME' ) ? CHORNAHORA_MAIL_FROM_NAME : 'Видавництво Чорна Гора';
+
+		$configure = function ( $phpmailer ) use ( $from_email, $from_name ) {
+			$phpmailer->CharSet  = 'UTF-8';
+			$phpmailer->Encoding = 'base64';
+			$phpmailer->isHTML( true );
+			$phpmailer->setFrom( $from_email, $from_name, false );
+		};
+
+		add_action( 'phpmailer_init', $configure );
 		wp_mail(
-			CHORNAHORA_ORDER_EMAIL,
-			'Нове замовлення ' . $order['order_id'],
-			implode( "\n", $lines ),
-			array( 'Content-Type: text/plain; charset=UTF-8' )
+			$to,
+			$subject,
+			$html,
+			array(
+				'Content-Type: text/html; charset=UTF-8',
+				sprintf( 'From: %s <%s>', $from_name, $from_email ),
+			)
 		);
+		remove_action( 'phpmailer_init', $configure );
+	}
+
+	private static function notification_email_html( $order ) {
+		$product = isset( $order['product_name'] ) && '' !== (string) $order['product_name']
+			? (string) $order['product_name']
+			: 'Кривава агонія Югославії';
+		$notes   = isset( $order['notes'] ) && '' !== (string) $order['notes'] ? (string) $order['notes'] : '—';
+		$rows    = array(
+			'Номер замовлення'     => isset( $order['order_id'] ) ? (string) $order['order_id'] : '',
+			'ПІБ'                  => isset( $order['full_name'] ) ? (string) $order['full_name'] : '',
+			'Телефон'              => isset( $order['phone'] ) ? (string) $order['phone'] : '',
+			'Місто'                => isset( $order['city'] ) ? (string) $order['city'] : '',
+			'Відділення/поштомат' => isset( $order['warehouse_label'] ) ? (string) $order['warehouse_label'] : '',
+			'Оплата'               => self::payment_label( isset( $order['payment'] ) ? $order['payment'] : '' ),
+			'Сума'                 => ( isset( $order['amount'] ) ? (string) (int) $order['amount'] : (string) CHORNAHORA_BOOK_PRICE ) . ' UAH',
+			'Товар'                => $product,
+			'Коментар'             => $notes,
+		);
+
+		$cells = '';
+
+		foreach ( $rows as $label => $value ) {
+			$cells .= '<tr>'
+				. '<td style="padding:8px 12px;border:1px solid #ddd;font-weight:600;">' . esc_html( $label ) . '</td>'
+				. '<td style="padding:8px 12px;border:1px solid #ddd;">' . esc_html( $value ) . '</td>'
+				. '</tr>';
+		}
+
+		return '<!DOCTYPE html><html lang="uk"><head><meta charset="UTF-8"></head><body style="font-family:Arial,sans-serif;color:#222;">'
+			. '<h1 style="font-size:18px;">Замовлення ' . esc_html( isset( $order['order_id'] ) ? (string) $order['order_id'] : '' ) . '</h1>'
+			. '<table cellpadding="0" cellspacing="0" style="border-collapse:collapse;max-width:560px;">' . $cells . '</table>'
+			. '</body></html>';
 	}
 
 	public static function send_to_google_sheets( $payload, $blocking = false ) {
@@ -305,7 +393,7 @@ class Chornahora_Order_Processor {
 			)
 		);
 
-		if ( is_wp_error( $response ) ) {
+		if ( $blocking && is_wp_error( $response ) ) {
 			error_log( 'Chornahora Sheets webhook failed: ' . $response->get_error_message() );
 		}
 

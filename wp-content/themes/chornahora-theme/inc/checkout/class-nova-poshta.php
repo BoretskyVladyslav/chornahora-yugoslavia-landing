@@ -95,12 +95,18 @@ class Chornahora_Nova_Poshta {
 	}
 
 	private static function request( $model, $method, $properties ) {
-		$body = array(
-			'apiKey'           => CHORNAHORA_NP_API_KEY,
-			'modelName'        => $model,
-			'calledMethod'     => $method,
-			'methodProperties' => $properties,
+		$payload = wp_json_encode(
+			array(
+				'apiKey'           => CHORNAHORA_NP_API_KEY,
+				'modelName'        => $model,
+				'calledMethod'     => $method,
+				'methodProperties' => $properties,
+			)
 		);
+
+		if ( false === $payload ) {
+			return array();
+		}
 
 		$remote = wp_remote_post(
 			self::API_URL,
@@ -109,7 +115,7 @@ class Chornahora_Nova_Poshta {
 				'headers' => array(
 					'Content-Type' => 'application/json',
 				),
-				'body'    => wp_json_encode( $body ),
+				'body'    => $payload,
 			)
 		);
 
@@ -117,9 +123,15 @@ class Chornahora_Nova_Poshta {
 			return array();
 		}
 
+		$code = (int) wp_remote_retrieve_response_code( $remote );
+
+		if ( $code < 200 || $code >= 300 ) {
+			return array();
+		}
+
 		$decoded = json_decode( wp_remote_retrieve_body( $remote ), true );
 
-		if ( ! is_array( $decoded ) || empty( $decoded['success'] ) ) {
+		if ( JSON_ERROR_NONE !== json_last_error() || ! is_array( $decoded ) || empty( $decoded['success'] ) ) {
 			return array();
 		}
 
