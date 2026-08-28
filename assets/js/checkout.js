@@ -356,6 +356,7 @@
 		warehouseLabel.value = "";
 		setTriggerLabel(warehouseValueEl, PLACEHOLDER_WAREHOUSE, true);
 		warehouseTrigger.disabled = true;
+		warehouseTrigger.classList.add("disabled");
 		warehouseWidget.classList.add("is-disabled");
 		closeWidget(warehouseWidget, warehouseTrigger, warehouseDropdown);
 		warehouseSearch.value = "";
@@ -369,10 +370,12 @@
 		setTriggerLabel(warehouseValueEl, PLACEHOLDER_WAREHOUSE, true);
 		if (!warehouseItems.length) {
 			warehouseTrigger.disabled = true;
+			warehouseTrigger.classList.add("disabled");
 			warehouseWidget.classList.add("is-disabled");
 			return;
 		}
 		warehouseTrigger.disabled = false;
+		warehouseTrigger.classList.remove("disabled");
 		warehouseWidget.classList.remove("is-disabled");
 		renderList(warehouseListEl, warehouseItems, "", selectWarehouse, 0);
 		activeWarehouseIndex = 0;

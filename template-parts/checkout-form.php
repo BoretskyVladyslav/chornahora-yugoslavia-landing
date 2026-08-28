@@ -8,7 +8,7 @@ $amount = (int) CHORNAHORA_BOOK_PRICE;
 <form class="checkout-form" id="ch-checkout-form" novalidate>
 	<div class="checkout-layout">
 		<div class="checkout-layout__main">
-			<section class="checkout-section">
+			<section class="checkout-section checkout-step">
 				<h2 class="checkout-section__title">Оплата та доставка</h2>
 
 				<div class="checkout-field">
@@ -30,13 +30,13 @@ $amount = (int) CHORNAHORA_BOOK_PRICE;
 				</div>
 			</section>
 
-			<section class="checkout-section">
+			<section class="checkout-section checkout-step">
 				<h2 class="checkout-section__title">Доставка Новою Поштою</h2>
 
-				<div class="checkout-field checkout-field--np">
+				<div class="checkout-field checkout-field--np form-group">
 					<span class="checkout-field__label" id="ch-city-label">Виберіть населений пункт</span>
-					<div class="np-select" id="ch-city-widget" data-np="city">
-						<button type="button" class="np-select__trigger" id="ch-city-trigger" aria-labelledby="ch-city-label" aria-haspopup="listbox" aria-expanded="false">
+					<div class="np-select np-field-wrapper" id="ch-city-widget" data-np="city">
+						<button type="button" class="np-select__trigger np-select-trigger np-city-trigger" id="ch-city-trigger" aria-labelledby="ch-city-label" aria-haspopup="listbox" aria-expanded="false">
 							<span class="np-select__value is-placeholder" id="ch-city-value">Виберіть населений пункт</span>
 							<span class="np-select__chevron" aria-hidden="true"></span>
 						</button>
@@ -51,10 +51,10 @@ $amount = (int) CHORNAHORA_BOOK_PRICE;
 					<span class="checkout-field__error" data-error-for="city"></span>
 				</div>
 
-				<div class="checkout-field checkout-field--np">
+				<div class="checkout-field checkout-field--np form-group">
 					<span class="checkout-field__label" id="ch-warehouse-label-text">Виберіть відділення або поштомат</span>
-					<div class="np-select is-disabled" id="ch-warehouse-widget" data-np="warehouse">
-						<button type="button" class="np-select__trigger" id="ch-warehouse-trigger" aria-labelledby="ch-warehouse-label-text" aria-haspopup="listbox" aria-expanded="false" disabled>
+					<div class="np-select np-field-wrapper is-disabled" id="ch-warehouse-widget" data-np="warehouse">
+						<button type="button" class="np-select__trigger np-select-trigger np-warehouse-trigger disabled" id="ch-warehouse-trigger" aria-labelledby="ch-warehouse-label-text" aria-haspopup="listbox" aria-expanded="false" disabled>
 							<span class="np-select__value is-placeholder" id="ch-warehouse-value">Виберіть відділення або поштомат</span>
 							<span class="np-select__chevron" aria-hidden="true"></span>
 						</button>

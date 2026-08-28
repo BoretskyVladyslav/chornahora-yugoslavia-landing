@@ -1878,3 +1878,31 @@ body.nav-open {
 		font-size: 1.3rem;
 	}
 }
+
+.form-group,
+.np-field-wrapper,
+.checkout-step,
+.checkout-field,
+.checkout-section,
+.checkout-steps {
+	background: transparent !important;
+}
+
+.np-select-trigger,
+.np-city-trigger,
+.np-warehouse-trigger,
+.np-select__trigger {
+	background-color: #f5f5f5 !important;
+	border: 1px solid #ddd !important;
+	color: #333 !important;
+	border-radius: 4px;
+}
+
+.np-warehouse-trigger[disabled],
+.np-warehouse-trigger.disabled,
+.np-select.is-disabled .np-select__trigger,
+.np-select__trigger:disabled {
+	background-color: #f8f8f8 !important;
+	border: 1px solid #e0e0e0 !important;
+	color: #888 !important;
+}

@@ -108,14 +108,8 @@ function chornahora_asset_uri( $path ) {
 	return chornahora_theme_file_uri( 'assets/' . ltrim( (string) $path, '/' ) );
 }
 
-function chornahora_asset_version( $relative_path ) {
-	$path = get_theme_file_path( $relative_path );
-
-	if ( $path && file_exists( $path ) ) {
-		return (string) filemtime( $path );
-	}
-
-	return (string) wp_get_theme()->get( 'Version' );
+function chornahora_asset_version( $relative_path = '' ) {
+	return (string) time();
 }
 
 function chornahora_enqueue_style_file( $handle, $relative, $deps = array() ) {
