@@ -24,6 +24,11 @@
 	var cityCache = {};
 	var warehouseCache = {};
 	var abortCity = null;
+	var cityBusy = false;
+	var warehouseBusy = false;
+	var afterCityIdle = null;
+	var afterWarehouseIdle = null;
+	var citySearchGen = 0;
 
 	function setStatus(text) {
 		if (statusEl) {
@@ -195,9 +200,9 @@
 		suggest.style.width = "100%";
 		suggest.style.zIndex = "99999";
 		suggest.style.background = "#fff";
-		suggest.style.border = "1px solid #ccc";
-		suggest.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)";
-		suggest.style.maxHeight = "250px";
+		suggest.style.border = "1px solid #ddd";
+		suggest.style.boxShadow = "0 8px 24px rgba(0,0,0,0.15)";
+		suggest.style.maxHeight = "260px";
 		suggest.style.overflowY = "auto";
 		suggest.style.top = "100%";
 		suggest.style.display = "block";
@@ -281,7 +286,27 @@
 		hideSuggest();
 		clearFieldError("city");
 		clearFieldError("warehouse");
-		fetchWarehouses(city.city_ref || city.settlement_ref || city.ref || "");
+		fetchWarehouses();
+	}
+
+	function runAfterCityIdle(fn) {
+		afterCityIdle = fn;
+	}
+
+	function runAfterWarehouseIdle(fn) {
+		afterWarehouseIdle = fn;
+	}
+
+	function flushIdleQueue(slot) {
+		var fn = slot === "city" ? afterCityIdle : afterWarehouseIdle;
+		if (slot === "city") {
+			afterCityIdle = null;
+		} else {
+			afterWarehouseIdle = null;
+		}
+		if (fn) {
+			fn();
+		}
 	}
 
 	function fetchWarehouses(ref) {
@@ -289,13 +314,18 @@
 		var settlement_ref = settlementRef.value || "";
 		var key = city_ref + "|" + settlement_ref;
 		if (!city_ref && !settlement_ref) {
+			warehouseBusy = false;
 			resetWarehouse();
+			flushIdleQueue("warehouse");
 			return;
 		}
 		if (warehouseCache[key]) {
+			warehouseBusy = false;
 			fillWarehouses(warehouseCache[key]);
+			flushIdleQueue("warehouse");
 			return;
 		}
+		warehouseBusy = true;
 		warehouse.disabled = true;
 		warehouse.innerHTML = '<option value="">Завантаження…</option>';
 		post("ch_get_warehouses", {
@@ -308,6 +338,9 @@
 		}).catch(function () {
 			resetWarehouse();
 			setStatus("Не вдалося завантажити відділення. Спробуйте ще раз.");
+		}).then(function () {
+			warehouseBusy = false;
+			flushIdleQueue("warehouse");
 		});
 	}
 
@@ -348,13 +381,17 @@
 
 	function searchCities() {
 		var query = cityInput.value.trim();
+		clearFieldError("city");
+		clearFieldError("warehouse");
 		if (query.length < 2) {
+			cityBusy = false;
 			hideSuggest();
 			if (!lastSelectedLabel || query !== lastSelectedLabel) {
 				cityRef.value = "";
 				settlementRef.value = "";
 				resetWarehouse();
 			}
+			flushIdleQueue("city");
 			return;
 		}
 		if (query !== lastSelectedLabel) {
@@ -363,12 +400,16 @@
 			resetWarehouse();
 		}
 		if (cityCache[query]) {
+			cityBusy = false;
 			renderCities(cityCache[query], query);
+			flushIdleQueue("city");
 			return;
 		}
 		if (abortCity) {
 			abortCity.abort();
 		}
+		var searchGen = ++citySearchGen;
+		cityBusy = true;
 		abortCity = new AbortController();
 		var body = new FormData();
 		body.append("action", "ch_search_cities");
@@ -395,10 +436,19 @@
 					return;
 				}
 				hideSuggest();
+			})
+			.then(function () {
+				if (searchGen !== citySearchGen) {
+					return;
+				}
+				cityBusy = false;
+				flushIdleQueue("city");
 			});
 	}
 
 	function scheduleSearch() {
+		clearFieldError("city");
+		clearFieldError("warehouse");
 		window.clearTimeout(cityTimer);
 		cityTimer = window.setTimeout(searchCities, CITY_DEBOUNCE_MS);
 	}
@@ -419,11 +469,13 @@
 		phone.value = formatPhone(phone.value);
 	});
 
-	["input", "keyup", "paste", "change", "focus"].forEach(function (evt) {
+	["input", "keyup", "paste", "focus"].forEach(function (evt) {
 		cityInput.addEventListener(evt, function (event) {
 			if (evt === "keyup" && event.key && skipSearchKeys[event.key]) {
 				return;
 			}
+			clearFieldError("city");
+			clearFieldError("warehouse");
 			if (evt === "paste") {
 				window.setTimeout(scheduleSearch, 0);
 				return;
@@ -502,53 +554,75 @@
 
 	form.addEventListener("submit", function (event) {
 		event.preventDefault();
-		clearErrors();
-		commitCityFromSuggest();
 
-		var errors = validateForm();
-		if (Object.keys(errors).length) {
-			showFieldErrors(errors);
-			setStatus("Перевірте поля форми.");
-			return;
+		function sendOrder() {
+			clearErrors();
+
+			var errors = validateForm();
+			if (Object.keys(errors).length) {
+				showFieldErrors(errors);
+				setStatus("Перевірте поля форми.");
+				return;
+			}
+
+			var submit = form.querySelector(".checkout-form__submit");
+			submit.disabled = true;
+			setStatus("Обробка замовлення…");
+
+			var payload = {
+				full_name: String(form.full_name.value || "").trim(),
+				phone: form.phone.value,
+				email: String(form.email.value || "").trim(),
+				city: String(form.city.value || "").trim(),
+				city_ref: cityRef.value,
+				settlement_ref: settlementRef.value,
+				warehouse_ref: warehouse.value,
+				warehouse_label: warehouseLabel.value,
+				notes: form.notes ? String(form.notes.value || "").trim() : "",
+				payment: (form.querySelector('input[name="payment"]:checked') || {}).value || "",
+			};
+
+			post("ch_process_order", payload)
+				.then(function (json) {
+					if (!json.success) {
+						var err = json.data || {};
+						showFieldErrors(err.fields || {});
+						setStatus(err.message || "Перевірте поля форми.");
+						submit.disabled = false;
+						return;
+					}
+					var data = json.data;
+					if (data.payment === "wayforpay") {
+						setStatus("Перехід до оплати…");
+						submitWayforpay(data);
+						return;
+					}
+					window.location.href = data.thank_you_url || cfg.thankYouUrl || "/thank-you/";
+				})
+				.catch(function () {
+					setStatus("Помилка з’єднання. Спробуйте ще раз.");
+					submit.disabled = false;
+				});
 		}
 
-		var submit = form.querySelector(".checkout-form__submit");
-		submit.disabled = true;
-		setStatus("Обробка замовлення…");
+		function continueSubmit() {
+			if (cityTimer) {
+				window.clearTimeout(cityTimer);
+				cityTimer = 0;
+				searchCities();
+			}
+			if (cityBusy) {
+				runAfterCityIdle(continueSubmit);
+				return;
+			}
+			commitCityFromSuggest();
+			if (warehouseBusy) {
+				runAfterWarehouseIdle(sendOrder);
+				return;
+			}
+			sendOrder();
+		}
 
-		var payload = {
-			full_name: String(form.full_name.value || "").trim(),
-			phone: form.phone.value,
-			email: String(form.email.value || "").trim(),
-			city: String(form.city.value || "").trim(),
-			city_ref: cityRef.value,
-			settlement_ref: settlementRef.value,
-			warehouse_ref: warehouse.value,
-			warehouse_label: warehouseLabel.value,
-			notes: form.notes ? String(form.notes.value || "").trim() : "",
-			payment: (form.querySelector('input[name="payment"]:checked') || {}).value || "",
-		};
-
-		post("ch_process_order", payload)
-			.then(function (json) {
-				if (!json.success) {
-					var err = json.data || {};
-					showFieldErrors(err.fields || {});
-					setStatus(err.message || "Перевірте поля форми.");
-					submit.disabled = false;
-					return;
-				}
-				var data = json.data;
-				if (data.payment === "wayforpay") {
-					setStatus("Перехід до оплати…");
-					submitWayforpay(data);
-					return;
-				}
-				window.location.href = data.thank_you_url || cfg.thankYouUrl || "/thank-you/";
-			})
-			.catch(function () {
-				setStatus("Помилка з’єднання. Спробуйте ще раз.");
-				submit.disabled = false;
-			});
+		continueSubmit();
 	});
 })();
