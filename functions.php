@@ -42,6 +42,23 @@ if ( ! defined( 'CHORNAHORA_WFP_SECRET' ) ) {
 	define( 'CHORNAHORA_WFP_SECRET', 'flk3409refn54t54t*FNJRET' );
 }
 
+function chornahora_kyiv_timezone() {
+	try {
+		return new DateTimeZone( 'Europe/Kyiv' );
+	} catch ( Exception $e ) {
+		return wp_timezone();
+	}
+}
+
+function chornahora_kyiv_datetime( $timestamp = null ) {
+	return wp_date( 'Y-m-d H:i:s', $timestamp, chornahora_kyiv_timezone() );
+}
+
+function chornahora_force_kyiv_timezone() {
+	return 'Europe/Kyiv';
+}
+add_filter( 'pre_option_timezone_string', 'chornahora_force_kyiv_timezone' );
+
 $ch_requires = array(
 	'/inc/checkout/class-nova-poshta.php',
 	'/inc/checkout/class-wayforpay.php',

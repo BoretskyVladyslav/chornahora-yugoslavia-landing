@@ -16,7 +16,7 @@ class Chornahora_Order_Processor {
 		$validated['currency']     = 'UAH';
 		$validated['product_name'] = 'Кривава агонія Югославії';
 		$validated['order_id']     = self::create_order_id();
-		$validated['created_at']   = wp_date( 'Y-m-d H:i:s' );
+		$validated['created_at']   = chornahora_kyiv_datetime();
 		$validated['status']       = 'wayforpay' === $validated['payment'] ? 'pending_payment' : 'complete';
 
 		$name_parts              = preg_split( '/\s+/', $validated['full_name'], 2 );
@@ -167,7 +167,7 @@ class Chornahora_Order_Processor {
 		$created = isset( $order['created_at'] ) ? (string) $order['created_at'] : '';
 
 		if ( '' === $created ) {
-			$created = wp_date( 'Y-m-d H:i:s' );
+			$created = chornahora_kyiv_datetime();
 		}
 
 		$comment = '';

@@ -17,16 +17,19 @@
 	box-sizing: border-box;
 }
 
+html,
+body {
+	height: 100%;
+	margin: 0;
+}
+
 html {
-	min-height: 100%;
-	min-height: 100vh;
 	background: #1c1c1c;
 	scroll-behavior: smooth;
 	scroll-padding-top: 84px;
 }
 
 body {
-	margin: 0;
 	min-height: 100vh;
 	display: flex;
 	flex-direction: column;
@@ -970,14 +973,14 @@ body.nav-open {
 	top: 100%;
 	left: 0;
 	width: 100%;
-	z-index: 99999;
+	z-index: 9999;
 	margin: 0;
 	padding: 0.25rem 0;
 	list-style: none;
 	background: #fff;
-	border: 1px solid #ddd;
-	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-	max-height: 260px;
+	border: 1px solid #ccc;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+	max-height: 250px;
 	overflow-y: auto;
 }
 

@@ -137,11 +137,11 @@
 			errors.email = "Вкажіть коректний email (наприклад, user@domain.com).";
 		}
 
-		if (!city || (!cityRef.value && !settlementRef.value)) {
+		if (!cityBusy && (!city || (!cityRef.value && !settlementRef.value))) {
 			errors.city = "Оберіть місто зі списку Нової пошти.";
 		}
 
-		if (!warehouse.value) {
+		if (!warehouseBusy && !warehouse.value) {
 			errors.warehouse = "Оберіть відділення або поштомат.";
 		}
 
@@ -163,7 +163,11 @@
 	}
 
 	function showFieldErrors(fields) {
+		var cityActive = document.activeElement === cityInput;
 		Object.keys(fields || {}).forEach(function (key) {
+			if ((key === "city" || key === "warehouse") && (cityActive || cityBusy || warehouseBusy)) {
+				return;
+			}
 			var msg = fields[key];
 			var holder = form.querySelector('[data-error-for="' + key + '"]');
 			var input = form.querySelector('[name="' + (key === "warehouse" ? "warehouse_ref" : key) + '"]');
@@ -226,11 +230,11 @@
 		suggest.style.position = "absolute";
 		suggest.style.left = "0";
 		suggest.style.width = "100%";
-		suggest.style.zIndex = "99999";
+		suggest.style.zIndex = "9999";
 		suggest.style.background = "#fff";
-		suggest.style.border = "1px solid #ddd";
-		suggest.style.boxShadow = "0 8px 24px rgba(0,0,0,0.15)";
-		suggest.style.maxHeight = "260px";
+		suggest.style.border = "1px solid #ccc";
+		suggest.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)";
+		suggest.style.maxHeight = "250px";
 		suggest.style.overflowY = "auto";
 		suggest.style.top = "100%";
 		suggest.style.display = "block";
