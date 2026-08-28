@@ -33,6 +33,7 @@
 		!cityWidget ||
 		!cityTrigger ||
 		!citySearch ||
+		!cityDropdown ||
 		!cityList ||
 		!cityHidden ||
 		!cityRef ||
@@ -40,6 +41,7 @@
 		!warehouseWidget ||
 		!warehouseTrigger ||
 		!warehouseSearch ||
+		!warehouseDropdown ||
 		!warehouseListEl ||
 		!warehouse ||
 		!warehouseLabel ||
@@ -273,10 +275,54 @@
 		return widget.classList.contains("is-open");
 	}
 
+	function clearFloatingStyles(dropdown) {
+		dropdown.classList.remove("is-floating");
+		dropdown.style.top = "";
+		dropdown.style.left = "";
+		dropdown.style.width = "";
+		dropdown.style.maxHeight = "";
+	}
+
+	function dockDropdown(widget, dropdown) {
+		if (dropdown.parentNode !== widget) {
+			widget.appendChild(dropdown);
+		}
+		clearFloatingStyles(dropdown);
+		dropdown.hidden = true;
+	}
+
+	function placeFloatingDropdown(trigger, dropdown) {
+		var rect = trigger.getBoundingClientRect();
+		var gap = 4;
+		var top = rect.bottom + gap;
+		var maxHeight = Math.max(160, window.innerHeight - top - 12);
+
+		dropdown.style.top = Math.round(top) + "px";
+		dropdown.style.left = Math.round(rect.left) + "px";
+		dropdown.style.width = Math.round(rect.width) + "px";
+		dropdown.style.maxHeight = Math.round(maxHeight) + "px";
+	}
+
+	function floatDropdown(trigger, dropdown) {
+		dropdown.classList.add("is-floating");
+		dropdown.hidden = false;
+		document.body.appendChild(dropdown);
+		placeFloatingDropdown(trigger, dropdown);
+	}
+
+	function syncOpenDropdowns() {
+		if (isOpen(cityWidget)) {
+			placeFloatingDropdown(cityTrigger, cityDropdown);
+		}
+		if (isOpen(warehouseWidget)) {
+			placeFloatingDropdown(warehouseTrigger, warehouseDropdown);
+		}
+	}
+
 	function closeWidget(widget, trigger, dropdown) {
 		widget.classList.remove("is-open");
 		trigger.setAttribute("aria-expanded", "false");
-		dropdown.hidden = true;
+		dockDropdown(widget, dropdown);
 	}
 
 	function closeAllDropdowns() {
@@ -295,7 +341,7 @@
 		}
 		widget.classList.add("is-open");
 		trigger.setAttribute("aria-expanded", "true");
-		dropdown.hidden = false;
+		floatDropdown(trigger, dropdown);
 		window.setTimeout(function () {
 			searchInput.focus();
 		}, 0);
@@ -610,10 +656,20 @@
 	});
 
 	document.addEventListener("mousedown", function (event) {
-		if (!cityWidget.contains(event.target) && !warehouseWidget.contains(event.target)) {
-			closeAllDropdowns();
+		var target = event.target;
+		var inCity = cityWidget.contains(target) || cityDropdown.contains(target);
+		var inWarehouse = warehouseWidget.contains(target) || warehouseDropdown.contains(target);
+
+		if (!inCity) {
+			closeWidget(cityWidget, cityTrigger, cityDropdown);
+		}
+		if (!inWarehouse) {
+			closeWidget(warehouseWidget, warehouseTrigger, warehouseDropdown);
 		}
 	});
+
+	window.addEventListener("resize", syncOpenDropdowns);
+	window.addEventListener("scroll", syncOpenDropdowns, true);
 
 	document.addEventListener("keydown", function (event) {
 		if (event.key === "Escape") {

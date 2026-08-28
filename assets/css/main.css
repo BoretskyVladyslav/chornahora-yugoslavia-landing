@@ -993,11 +993,21 @@ body.nav-open {
 .checkout-field--np,
 .checkout-field--suggest {
 	overflow: visible;
-	z-index: 20;
+	z-index: auto;
+}
+
+.checkout-field--np:has(.np-select.is-open) {
+	z-index: 80;
 }
 
 .np-select {
 	position: relative;
+	display: block;
+	z-index: 1;
+}
+
+.np-select.is-open {
+	z-index: 80;
 }
 
 .np-select__trigger {
@@ -1066,28 +1076,46 @@ body.nav-open {
 	position: absolute;
 	top: calc(100% + 4px);
 	left: 0;
+	right: 0;
 	width: 100%;
-	z-index: 99999;
+	margin: 0;
 	padding: 8px;
-	background: #fff;
-	border: 1px solid #ddd;
+	z-index: 90;
+	box-sizing: border-box;
+	background: #ffffff !important;
+	border: 1px solid #d1d5db;
 	border-radius: 4px;
-	box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+	box-shadow: 0 12px 28px rgba(0, 0, 0, 0.16);
+	pointer-events: auto;
 }
 
 .np-select__dropdown[hidden] {
-	display: none;
+	display: none !important;
+}
+
+.np-select.is-open .np-select__dropdown:not([hidden]):not(.is-floating) {
+	display: block;
+}
+
+.np-select__dropdown.is-floating {
+	position: fixed !important;
+	right: auto;
+	z-index: 100050;
+	display: flex !important;
+	flex-direction: column;
+	overflow: hidden;
 }
 
 .np-search-input {
 	display: block;
+	flex: 0 0 auto;
 	width: 100%;
 	min-height: 40px;
 	margin: 0 0 6px;
 	padding: 8px 12px;
 	border: 1px solid #ddd;
 	border-radius: 4px;
-	background: #fff;
+	background: #ffffff !important;
 	color: #333;
 	font: inherit;
 	font-size: 15px;
@@ -1101,11 +1129,14 @@ body.nav-open {
 }
 
 .np-select__list {
+	flex: 1 1 auto;
+	min-height: 0;
 	max-height: 220px;
 	overflow-y: auto;
 	margin: 0;
 	padding: 0;
 	list-style: none;
+	background: #ffffff;
 }
 
 .np-select__list li {
