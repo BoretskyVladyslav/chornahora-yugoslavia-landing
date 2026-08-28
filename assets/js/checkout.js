@@ -15,6 +15,11 @@
 	var warehouse = document.getElementById("ch-warehouse");
 	var warehouseLabel = document.getElementById("ch-warehouse-label");
 	var phone = document.getElementById("ch-phone");
+
+	if (!cityInput || !cityRef || !settlementRef || !suggest || !warehouse || !warehouseLabel || !phone) {
+		return;
+	}
+
 	var statusEl = form.querySelector("[data-form-status]");
 	var cityTimer = 0;
 	var lastSelectedLabel = "";
@@ -36,20 +41,43 @@
 		}
 	}
 
-	function post(action, payload) {
+	function parseJsonSafe(text) {
+		if (!text) {
+			return {};
+		}
+		try {
+			var parsed = JSON.parse(text);
+			if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+				return {};
+			}
+			return parsed;
+		} catch (err) {
+			return {};
+		}
+	}
+
+	function post(action, payload, signal) {
 		var body = new FormData();
 		body.append("action", action);
 		body.append("nonce", cfg.nonce);
-		Object.keys(payload).forEach(function (key) {
-			body.append(key, payload[key]);
+		Object.keys(payload || {}).forEach(function (key) {
+			body.append(key, payload[key] == null ? "" : payload[key]);
 		});
-		return fetch(cfg.ajaxUrl, {
+		var opts = {
 			method: "POST",
 			credentials: "same-origin",
 			body: body,
-		}).then(function (res) {
-			return res.json().then(function (json) {
+		};
+		if (signal) {
+			opts.signal = signal;
+		}
+		return fetch(cfg.ajaxUrl, opts).then(function (res) {
+			return res.text().then(function (text) {
+				var json = parseJsonSafe(text);
 				json.status = res.status;
+				if (typeof json.success === "undefined") {
+					json.success = false;
+				}
 				return json;
 			});
 		});
@@ -332,7 +360,7 @@
 			city_ref: city_ref,
 			settlement_ref: settlement_ref,
 		}).then(function (json) {
-			var list = json.success && json.data ? json.data.warehouses || [] : [];
+			var list = json && json.success && json.data ? json.data.warehouses || [] : [];
 			warehouseCache[key] = list;
 			fillWarehouses(list);
 		}).catch(function () {
@@ -411,21 +439,9 @@
 		var searchGen = ++citySearchGen;
 		cityBusy = true;
 		abortCity = new AbortController();
-		var body = new FormData();
-		body.append("action", "ch_search_cities");
-		body.append("nonce", cfg.nonce);
-		body.append("query", query);
-		fetch(cfg.ajaxUrl, {
-			method: "POST",
-			credentials: "same-origin",
-			body: body,
-			signal: abortCity.signal,
-		})
-			.then(function (res) {
-				return res.json();
-			})
+		post("ch_search_cities", { query: query }, abortCity.signal)
 			.then(function (json) {
-				var cities = json.success && json.data ? json.data.cities || [] : [];
+				var cities = json && json.success && json.data ? json.data.cities || [] : [];
 				cityCache[query] = cities;
 				if (cityInput.value.trim() === query) {
 					renderCities(cities, query);
@@ -584,14 +600,14 @@
 
 			post("ch_process_order", payload)
 				.then(function (json) {
-					if (!json.success) {
-						var err = json.data || {};
+					if (!json || !json.success) {
+						var err = (json && json.data) || {};
 						showFieldErrors(err.fields || {});
-						setStatus(err.message || "Перевірте поля форми.");
+						setStatus((err && err.message) || "Перевірте поля форми.");
 						submit.disabled = false;
 						return;
 					}
-					var data = json.data;
+					var data = json.data || {};
 					if (data.payment === "wayforpay") {
 						setStatus("Перехід до оплати…");
 						submitWayforpay(data);

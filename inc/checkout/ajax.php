@@ -10,39 +10,59 @@ function chornahora_ajax_verify() {
 	}
 }
 
+function chornahora_ajax_post_text( $key ) {
+	if ( ! isset( $_POST[ $key ] ) ) {
+		return '';
+	}
+
+	return sanitize_text_field( wp_unslash( $_POST[ $key ] ) );
+}
+
 function ch_search_cities() {
 	chornahora_ajax_verify();
 
-	$query  = isset( $_POST['query'] ) ? wp_unslash( $_POST['query'] ) : '';
-	$cities = Chornahora_Nova_Poshta::search_cities( $query );
+	if ( ! class_exists( 'Chornahora_Nova_Poshta' ) ) {
+		wp_send_json_success( array( 'cities' => array() ) );
+	}
 
-	wp_send_json_success( array( 'cities' => $cities ) );
+	$cities = Chornahora_Nova_Poshta::search_cities( chornahora_ajax_post_text( 'query' ) );
+
+	wp_send_json_success( array( 'cities' => is_array( $cities ) ? $cities : array() ) );
 }
 
 function ch_get_warehouses() {
 	chornahora_ajax_verify();
 
-	$city_ref       = isset( $_POST['city_ref'] ) ? wp_unslash( $_POST['city_ref'] ) : '';
-	$settlement_ref = isset( $_POST['settlement_ref'] ) ? wp_unslash( $_POST['settlement_ref'] ) : '';
-	$warehouses     = Chornahora_Nova_Poshta::get_warehouses( $city_ref, $settlement_ref );
+	if ( ! class_exists( 'Chornahora_Nova_Poshta' ) ) {
+		wp_send_json_success( array( 'warehouses' => array() ) );
+	}
 
-	wp_send_json_success( array( 'warehouses' => $warehouses ) );
+	$warehouses = Chornahora_Nova_Poshta::get_warehouses(
+		chornahora_ajax_post_text( 'city_ref' ),
+		chornahora_ajax_post_text( 'settlement_ref' )
+	);
+
+	wp_send_json_success( array( 'warehouses' => is_array( $warehouses ) ? $warehouses : array() ) );
 }
 
 function ch_process_order() {
 	chornahora_ajax_verify();
 
+	if ( ! class_exists( 'Chornahora_Order_Processor' ) ) {
+		wp_send_json_error( array( 'message' => 'Сервіс замовлень недоступний. Спробуйте ще раз.' ), 500 );
+	}
+
 	$input = array(
-		'full_name'        => isset( $_POST['full_name'] ) ? wp_unslash( $_POST['full_name'] ) : '',
-		'phone'            => isset( $_POST['phone'] ) ? wp_unslash( $_POST['phone'] ) : '',
-		'email'            => isset( $_POST['email'] ) ? wp_unslash( $_POST['email'] ) : '',
-		'city'             => isset( $_POST['city'] ) ? wp_unslash( $_POST['city'] ) : '',
-		'city_ref'         => isset( $_POST['city_ref'] ) ? wp_unslash( $_POST['city_ref'] ) : '',
-		'settlement_ref'   => isset( $_POST['settlement_ref'] ) ? wp_unslash( $_POST['settlement_ref'] ) : '',
-		'warehouse_ref'    => isset( $_POST['warehouse_ref'] ) ? wp_unslash( $_POST['warehouse_ref'] ) : '',
-		'warehouse_label'  => isset( $_POST['warehouse_label'] ) ? wp_unslash( $_POST['warehouse_label'] ) : '',
-		'payment'          => isset( $_POST['payment'] ) ? wp_unslash( $_POST['payment'] ) : '',
-		'notes'            => isset( $_POST['notes'] ) ? wp_unslash( $_POST['notes'] ) : '',
+		'full_name'       => chornahora_ajax_post_text( 'full_name' ),
+		'phone'           => chornahora_ajax_post_text( 'phone' ),
+		'email'           => chornahora_ajax_post_text( 'email' ),
+		'city'            => chornahora_ajax_post_text( 'city' ),
+		'city_ref'        => chornahora_ajax_post_text( 'city_ref' ),
+		'settlement_ref'  => chornahora_ajax_post_text( 'settlement_ref' ),
+		'warehouse_ref'   => chornahora_ajax_post_text( 'warehouse_ref' ),
+		'warehouse_label' => chornahora_ajax_post_text( 'warehouse_label' ),
+		'payment'         => chornahora_ajax_post_text( 'payment' ),
+		'notes'           => isset( $_POST['notes'] ) ? sanitize_textarea_field( wp_unslash( $_POST['notes'] ) ) : '',
 	);
 
 	$result = Chornahora_Order_Processor::process( $input );
@@ -52,7 +72,7 @@ function ch_process_order() {
 		wp_send_json_error(
 			array(
 				'message' => $result->get_error_message(),
-				'fields'  => isset( $data['fields'] ) ? $data['fields'] : array(),
+				'fields'  => is_array( $data ) && isset( $data['fields'] ) ? $data['fields'] : array(),
 			),
 			400
 		);

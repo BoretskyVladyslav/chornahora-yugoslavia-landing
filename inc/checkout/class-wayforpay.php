@@ -8,11 +8,11 @@ class Chornahora_Wayforpay {
 	const PURCHASE_URL = 'https://secure.wayforpay.com/pay';
 
 	public static function checkout_payload( $order ) {
-		$amount   = (string) (int) $order['amount'];
-		$domain   = wp_parse_url( home_url(), PHP_URL_HOST );
-		$order_id = (string) $order['order_id'];
+		$amount   = (string) (int) ( isset( $order['amount'] ) ? $order['amount'] : CHORNAHORA_BOOK_PRICE );
+		$domain   = (string) wp_parse_url( home_url(), PHP_URL_HOST );
+		$order_id = isset( $order['order_id'] ) ? (string) $order['order_id'] : '';
 		$date     = (string) time();
-		$name     = (string) $order['product_name'];
+		$name     = isset( $order['product_name'] ) ? (string) $order['product_name'] : 'Кривава агонія Югославії';
 		$count    = '1';
 		$price    = $amount;
 
@@ -42,10 +42,10 @@ class Chornahora_Wayforpay {
 			'productName'        => array( $name ),
 			'productCount'       => array( $count ),
 			'productPrice'       => array( $price ),
-			'clientFirstName'    => $order['first_name'],
-			'clientLastName'     => $order['last_name'],
-			'clientEmail'        => $order['email'],
-			'clientPhone'        => preg_replace( '/\D+/', '', $order['phone'] ),
+			'clientFirstName'    => isset( $order['first_name'] ) ? $order['first_name'] : '',
+			'clientLastName'     => isset( $order['last_name'] ) ? $order['last_name'] : '',
+			'clientEmail'        => isset( $order['email'] ) ? $order['email'] : '',
+			'clientPhone'        => preg_replace( '/\D+/', '', isset( $order['phone'] ) ? $order['phone'] : '' ),
 			'language'           => 'UA',
 			'serviceUrl'         => home_url( '/?ch_wfp=notify' ),
 			'returnUrl'          => chornahora_thankyou_url( $order_id ),

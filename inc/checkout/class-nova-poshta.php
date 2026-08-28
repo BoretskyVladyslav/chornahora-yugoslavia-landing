@@ -33,6 +33,10 @@ class Chornahora_Nova_Poshta {
 			)
 		);
 
+		if ( null === $response ) {
+			return array();
+		}
+
 		$cities = self::normalize_settlements( $response );
 		set_transient( $cache_key, $cities, 15 * MINUTE_IN_SECONDS );
 
@@ -56,8 +60,15 @@ class Chornahora_Nova_Poshta {
 
 		$rows = self::fetch_warehouse_pages( $city_ref, $settlement_ref );
 
-		if ( empty( $rows ) && '' !== $settlement_ref && '' !== $city_ref ) {
-			$rows = self::fetch_warehouse_pages( $city_ref, '' );
+		if ( ( null === $rows || array() === $rows ) && '' !== $settlement_ref && '' !== $city_ref ) {
+			$fallback = self::fetch_warehouse_pages( $city_ref, '' );
+			if ( null !== $fallback ) {
+				$rows = $fallback;
+			}
+		}
+
+		if ( null === $rows ) {
+			return array();
 		}
 
 		$warehouses = self::normalize_warehouses( $rows );
@@ -84,7 +95,12 @@ class Chornahora_Nova_Poshta {
 			}
 
 			$chunk = self::request( 'AddressGeneral', 'getWarehouses', $props );
-			$all   = array_merge( $all, $chunk );
+
+			if ( null === $chunk ) {
+				return empty( $all ) ? null : $all;
+			}
+
+			$all = array_merge( $all, $chunk );
 
 			if ( count( $chunk ) < self::PAGE_LIMIT ) {
 				break;
@@ -105,7 +121,7 @@ class Chornahora_Nova_Poshta {
 		);
 
 		if ( false === $payload ) {
-			return array();
+			return null;
 		}
 
 		$remote = wp_remote_post(
@@ -120,18 +136,28 @@ class Chornahora_Nova_Poshta {
 		);
 
 		if ( is_wp_error( $remote ) ) {
-			return array();
+			return null;
 		}
 
 		$code = (int) wp_remote_retrieve_response_code( $remote );
 
 		if ( $code < 200 || $code >= 300 ) {
-			return array();
+			return null;
 		}
 
-		$decoded = json_decode( wp_remote_retrieve_body( $remote ), true );
+		$body = trim( (string) wp_remote_retrieve_body( $remote ) );
 
-		if ( JSON_ERROR_NONE !== json_last_error() || ! is_array( $decoded ) || empty( $decoded['success'] ) ) {
+		if ( '' === $body ) {
+			return null;
+		}
+
+		$decoded = json_decode( $body, true );
+
+		if ( JSON_ERROR_NONE !== json_last_error() || ! is_array( $decoded ) ) {
+			return null;
+		}
+
+		if ( empty( $decoded['success'] ) ) {
 			return array();
 		}
 
@@ -141,9 +167,13 @@ class Chornahora_Nova_Poshta {
 	private static function normalize_settlements( $data ) {
 		$addresses = array();
 
-		if ( isset( $data[0]['Addresses'] ) && is_array( $data[0]['Addresses'] ) ) {
+		if ( ! is_array( $data ) ) {
+			return array();
+		}
+
+		if ( isset( $data[0] ) && is_array( $data[0] ) && isset( $data[0]['Addresses'] ) && is_array( $data[0]['Addresses'] ) ) {
 			$addresses = $data[0]['Addresses'];
-		} elseif ( is_array( $data ) ) {
+		} else {
 			$addresses = $data;
 		}
 
@@ -185,6 +215,10 @@ class Chornahora_Nova_Poshta {
 
 	private static function normalize_warehouses( $data ) {
 		$out = array();
+
+		if ( ! is_array( $data ) ) {
+			return $out;
+		}
 
 		foreach ( $data as $row ) {
 			if ( ! is_array( $row ) || empty( $row['Ref'] ) ) {

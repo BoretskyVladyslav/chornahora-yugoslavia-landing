@@ -1,4 +1,10 @@
-<?php get_template_part( 'template-parts/footer' ); ?>
-<?php wp_footer(); ?>
+<?php
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+get_template_part( 'template-parts/footer' );
+wp_footer();
+?>
 </body>
 </html>

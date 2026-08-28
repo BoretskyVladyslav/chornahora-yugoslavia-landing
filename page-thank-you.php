@@ -11,7 +11,11 @@ if ( isset( $_GET['order'] ) ) { // phpcs:ignore WordPress.Security.NonceVerific
 	$order_id = sanitize_text_field( wp_unslash( $_POST['orderReference'] ) );
 }
 
-$order = '' !== $order_id ? Chornahora_Order_Processor::find_by_order_id( $order_id ) : null;
+$order = null;
+
+if ( '' !== $order_id && class_exists( 'Chornahora_Order_Processor' ) ) {
+	$order = Chornahora_Order_Processor::find_by_order_id( $order_id );
+}
 
 get_header();
 ?>
