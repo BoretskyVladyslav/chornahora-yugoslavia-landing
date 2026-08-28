@@ -7,7 +7,7 @@ $amount = (int) CHORNAHORA_BOOK_PRICE;
 ?>
 <form class="checkout-form" id="ch-checkout-form" novalidate>
 	<div class="checkout-layout">
-		<div class="checkout-layout__main">
+		<div class="checkout-layout__main checkout-card">
 			<section class="checkout-section checkout-step">
 				<h2 class="checkout-section__title">Оплата та доставка</h2>
 

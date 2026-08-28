@@ -10,7 +10,7 @@ $steps   = array(
 	3 => 'Замовлення отримано',
 );
 ?>
-<nav class="checkout-steps checkout-step" aria-label="Етапи оформлення замовлення">
+<nav class="checkout-steps" aria-label="Етапи оформлення замовлення">
 	<ol class="checkout-steps__list">
 		<?php foreach ( $steps as $index => $label ) : ?>
 			<?php
