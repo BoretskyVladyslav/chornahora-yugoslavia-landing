@@ -35,11 +35,19 @@ if ( ! defined( 'CHORNAHORA_SHEETS_WEBHOOK' ) ) {
 }
 
 if ( ! defined( 'CHORNAHORA_WFP_MERCHANT' ) ) {
-	define( 'CHORNAHORA_WFP_MERCHANT', 'test_merch_n1' );
+	define( 'CHORNAHORA_WFP_MERCHANT', 'yugoslavia_chornahora_com_ua' );
 }
 
 if ( ! defined( 'CHORNAHORA_WFP_SECRET' ) ) {
-	define( 'CHORNAHORA_WFP_SECRET', 'flk3409refn54t54t*FNJRET' );
+	define( 'CHORNAHORA_WFP_SECRET', '380b7102fa855bd8d22c87e33f9bf53ebeaf9e76' );
+}
+
+if ( ! defined( 'CHORNAHORA_WFP_DOMAIN' ) ) {
+	define( 'CHORNAHORA_WFP_DOMAIN', 'yugoslavia.chornahora.com.ua' );
+}
+
+if ( ! defined( 'CHORNAHORA_WFP_CURRENCY' ) ) {
+	define( 'CHORNAHORA_WFP_CURRENCY', 'UAH' );
 }
 
 function chornahora_kyiv_timezone() {
@@ -164,6 +172,27 @@ function chornahora_handle_wfp_notify() {
 }
 add_action( 'init', 'chornahora_handle_wfp_notify', 0 );
 
+function chornahora_register_wfp_rest_route() {
+	register_rest_route(
+		'chornahora/v1',
+		'/wayforpay/notify',
+		array(
+			'methods'             => 'POST',
+			'callback'            => 'chornahora_rest_wfp_notify',
+			'permission_callback' => '__return_true',
+		)
+	);
+}
+add_action( 'rest_api_init', 'chornahora_register_wfp_rest_route' );
+
+function chornahora_rest_wfp_notify() {
+	if ( ! class_exists( 'Chornahora_Wayforpay' ) ) {
+		return new WP_Error( 'wfp_unavailable', 'WayForPay handler unavailable.', array( 'status' => 500 ) );
+	}
+
+	Chornahora_Wayforpay::handle_notify();
+}
+
 function chornahora_theme_scripts() {
 	wp_enqueue_style(
 		'chornahora-fonts',
@@ -214,17 +243,27 @@ function chornahora_theme_scripts() {
 
 	chornahora_enqueue_script_file( 'chornahora-main', 'assets/js/main.js', $main_deps, true );
 
-	if ( is_page( 'checkout' ) && chornahora_enqueue_script_file( 'chornahora-checkout', 'assets/js/checkout.js', array(), true ) ) {
-		wp_localize_script(
-			'chornahora-checkout',
-			'chCheckout',
-			array(
-				'ajaxUrl'     => chornahora_https_url( admin_url( 'admin-ajax.php' ) ),
-				'nonce'       => wp_create_nonce( 'chornahora_checkout' ),
-				'amount'      => CHORNAHORA_BOOK_PRICE,
-				'thankYouUrl' => chornahora_thankyou_url(),
-			)
+	if ( is_page( 'checkout' ) ) {
+		wp_enqueue_script(
+			'wayforpay-widget',
+			chornahora_https_url( 'https://secure.wayforpay.com/server/pay-widget.js' ),
+			array(),
+			null,
+			true
 		);
+
+		if ( chornahora_enqueue_script_file( 'chornahora-checkout', 'assets/js/checkout.js', array(), true ) ) {
+			wp_localize_script(
+				'chornahora-checkout',
+				'chCheckout',
+				array(
+					'ajaxUrl'     => chornahora_https_url( admin_url( 'admin-ajax.php' ) ),
+					'nonce'       => wp_create_nonce( 'chornahora_checkout' ),
+					'amount'      => CHORNAHORA_BOOK_PRICE,
+					'thankYouUrl' => chornahora_thankyou_url(),
+				)
+			);
+		}
 	}
 }
 add_action( 'wp_enqueue_scripts', 'chornahora_theme_scripts' );

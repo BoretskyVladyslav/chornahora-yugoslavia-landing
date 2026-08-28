@@ -5,10 +5,16 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 $order_id = '';
 
+if ( isset( $_POST['orderReference'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
+	$order_id = sanitize_text_field( wp_unslash( $_POST['orderReference'] ) );
+	wp_safe_redirect( chornahora_thankyou_url( $order_id ) );
+	exit;
+}
+
 if ( isset( $_GET['order'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	$order_id = sanitize_text_field( wp_unslash( $_GET['order'] ) );
-} elseif ( isset( $_POST['orderReference'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
-	$order_id = sanitize_text_field( wp_unslash( $_POST['orderReference'] ) );
+} elseif ( isset( $_GET['orderReference'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	$order_id = sanitize_text_field( wp_unslash( $_GET['orderReference'] ) );
 }
 
 $order = null;

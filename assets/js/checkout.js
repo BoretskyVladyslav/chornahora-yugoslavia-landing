@@ -679,10 +679,64 @@
 
 	function submitWayforpay(payload) {
 		var wfp = payload.wayforpay;
-		if (!wfp || !wfp.url || !wfp.fields) {
+		var thankYou = payload.thank_you_url || cfg.thankYouUrl || "/thank-you/";
+		var submit = form.querySelector(".checkout-form__submit");
+
+		if (!wfp) {
 			setStatus("Не вдалося підготувати оплату WayForPay.");
+			if (submit) {
+				submit.disabled = false;
+			}
 			return;
 		}
+
+		var widgetFields = wfp.widget || null;
+
+		if (widgetFields && typeof window.Wayforpay === "function") {
+			try {
+				var wayforpay = new window.Wayforpay();
+				wayforpay.run(
+					widgetFields,
+					function () {
+						window.location.href = thankYou;
+					},
+					function () {
+						setStatus("Оплату відхилено. Спробуйте ще раз або оберіть післяплату.");
+						if (submit) {
+							submit.disabled = false;
+						}
+					},
+					function () {
+						window.location.href = thankYou;
+					}
+				);
+				window.addEventListener("message", function onWfpMessage(event) {
+					if (event.data === "WfpWidgetEventApproved") {
+						window.removeEventListener("message", onWfpMessage);
+						window.location.href = thankYou;
+					}
+					if (event.data === "WfpWidgetEventClose") {
+						window.removeEventListener("message", onWfpMessage);
+						if (submit) {
+							submit.disabled = false;
+						}
+						setStatus("");
+					}
+				});
+				return;
+			} catch (err) {
+				// Fall through to hosted payment page.
+			}
+		}
+
+		if (!wfp.url || !wfp.fields) {
+			setStatus("Не вдалося підготувати оплату WayForPay.");
+			if (submit) {
+				submit.disabled = false;
+			}
+			return;
+		}
+
 		var payForm = document.createElement("form");
 		payForm.method = "POST";
 		payForm.action = wfp.url;

@@ -243,17 +243,24 @@ class Chornahora_Order_Processor {
 		);
 	}
 
-	public static function update_status( $order_id, $status ) {
+	public static function update_status( $order_id, $status, $extra = array() ) {
 		$order = self::find_by_order_id( $order_id );
 
 		if ( ! $order ) {
 			return false;
 		}
 
+		$previous        = isset( $order['status'] ) ? (string) $order['status'] : '';
 		$order['status'] = sanitize_key( $status );
 		update_post_meta( $order['post_id'], '_ch_status', $order['status'] );
 
-		if ( 'paid' === $order['status'] ) {
+		if ( is_array( $extra ) ) {
+			foreach ( $extra as $key => $value ) {
+				update_post_meta( $order['post_id'], '_ch_' . sanitize_key( $key ), sanitize_text_field( (string) $value ) );
+			}
+		}
+
+		if ( 'paid' === $order['status'] && 'paid' !== $previous ) {
 			self::send_notification_email( $order );
 			self::send_to_google_sheets( self::sheets_payload( $order, $order['post_id'] ) );
 		}
