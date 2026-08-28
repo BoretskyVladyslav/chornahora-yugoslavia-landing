@@ -33,23 +33,38 @@ $amount = (int) CHORNAHORA_BOOK_PRICE;
 			<section class="checkout-section">
 				<h2 class="checkout-section__title">Доставка Новою Поштою</h2>
 
-				<div class="checkout-field checkout-field--suggest checkout-field--chevron">
-					<label for="ch-city">Виберіть населений пункт</label>
-					<div class="checkout-city">
-						<input id="ch-city" name="city" type="text" autocomplete="off" placeholder="Виберіть населений пункт" required>
-						<ul class="checkout-suggest" id="ch-city-suggest" hidden role="listbox"></ul>
+				<div class="checkout-field checkout-field--np">
+					<span class="checkout-field__label" id="ch-city-label">Виберіть населений пункт</span>
+					<div class="np-select" id="ch-city-widget" data-np="city">
+						<button type="button" class="np-select__trigger" id="ch-city-trigger" aria-labelledby="ch-city-label" aria-haspopup="listbox" aria-expanded="false">
+							<span class="np-select__value is-placeholder" id="ch-city-value">Виберіть населений пункт</span>
+							<span class="np-select__chevron" aria-hidden="true"></span>
+						</button>
+						<input type="hidden" name="city" id="ch-city" required>
+						<input type="hidden" name="city_ref" id="ch-city-ref">
+						<input type="hidden" name="settlement_ref" id="ch-settlement-ref">
+						<div class="np-select__dropdown" id="ch-city-dropdown" hidden>
+							<input type="text" class="np-search-input" id="ch-city-search" placeholder="Почніть вводити назву..." autocomplete="off">
+							<ul class="np-select__list" id="ch-city-suggest" role="listbox"></ul>
+						</div>
 					</div>
-					<input type="hidden" name="city_ref" id="ch-city-ref">
-					<input type="hidden" name="settlement_ref" id="ch-settlement-ref">
 					<span class="checkout-field__error" data-error-for="city"></span>
 				</div>
 
-				<div class="checkout-field checkout-field--chevron">
-					<label for="ch-warehouse">Виберіть відділення або поштомат</label>
-					<select id="ch-warehouse" name="warehouse_ref" required disabled>
-						<option value="">Виберіть відділення або поштомат</option>
-					</select>
-					<input type="hidden" name="warehouse_label" id="ch-warehouse-label">
+				<div class="checkout-field checkout-field--np">
+					<span class="checkout-field__label" id="ch-warehouse-label-text">Виберіть відділення або поштомат</span>
+					<div class="np-select is-disabled" id="ch-warehouse-widget" data-np="warehouse">
+						<button type="button" class="np-select__trigger" id="ch-warehouse-trigger" aria-labelledby="ch-warehouse-label-text" aria-haspopup="listbox" aria-expanded="false" disabled>
+							<span class="np-select__value is-placeholder" id="ch-warehouse-value">Виберіть відділення або поштомат</span>
+							<span class="np-select__chevron" aria-hidden="true"></span>
+						</button>
+						<input type="hidden" name="warehouse_ref" id="ch-warehouse" required>
+						<input type="hidden" name="warehouse_label" id="ch-warehouse-label">
+						<div class="np-select__dropdown" id="ch-warehouse-dropdown" hidden>
+							<input type="text" class="np-search-input" id="ch-warehouse-search" placeholder="Почніть вводити назву..." autocomplete="off">
+							<ul class="np-select__list" id="ch-warehouse-list" role="listbox"></ul>
+						</div>
+					</div>
 					<span class="checkout-field__error" data-error-for="warehouse"></span>
 				</div>
 
