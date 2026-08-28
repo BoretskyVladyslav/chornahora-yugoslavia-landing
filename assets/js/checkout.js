@@ -17,15 +17,17 @@
 	var phone = document.getElementById("ch-phone");
 	var statusEl = form.querySelector("[data-form-status]");
 	var cityTimer = 0;
+	var cityCache = {};
+	var warehouseCache = {};
+	var abortCity = null;
+	var matchedCities = [];
+	var autoSelectPending = false;
 
 	function setStatus(text) {
 		if (statusEl) {
 			statusEl.textContent = text;
 		}
 	}
-	var cityCache = {};
-	var warehouseCache = {};
-	var abortCity = null;
 
 	function post(action, payload) {
 		var body = new FormData();
@@ -144,23 +146,67 @@
 		suggest.innerHTML = "";
 	}
 
+	function hasSelectedCity() {
+		return Boolean(cityRef.value || settlementRef.value);
+	}
+
 	function renderCities(cities) {
+		matchedCities = cities.slice();
 		suggest.innerHTML = "";
 		if (!cities.length) {
 			hideSuggest();
 			return;
 		}
-		cities.forEach(function (city) {
+		cities.forEach(function (city, index) {
 			var li = document.createElement("li");
 			li.setAttribute("role", "option");
 			li.textContent = city.label;
+			if (index === 0) {
+				li.className = "is-active";
+			}
 			li.addEventListener("mousedown", function (event) {
 				event.preventDefault();
+				autoSelectPending = false;
 				selectCity(city);
 			});
 			suggest.appendChild(li);
 		});
 		suggest.hidden = false;
+	}
+
+	function selectCity(city) {
+		if (!city) {
+			return;
+		}
+		autoSelectPending = false;
+		cityInput.value = city.label;
+		cityRef.value = city.city_ref || "";
+		settlementRef.value = city.settlement_ref || "";
+		hideSuggest();
+		loadWarehouses();
+	}
+
+	function selectFirstCity() {
+		if (hasSelectedCity()) {
+			hideSuggest();
+			return true;
+		}
+		if (!matchedCities.length) {
+			return false;
+		}
+		selectCity(matchedCities[0]);
+		return true;
+	}
+
+	function commitCityFromList() {
+		if (hasSelectedCity()) {
+			hideSuggest();
+			return;
+		}
+		if (selectFirstCity()) {
+			return;
+		}
+		autoSelectPending = cityInput.value.trim().length >= 2;
 	}
 
 	function resetWarehouse() {
@@ -178,14 +224,6 @@
 			warehouse.appendChild(opt);
 		});
 		warehouse.disabled = list.length === 0;
-	}
-
-	function selectCity(city) {
-		cityInput.value = city.label;
-		cityRef.value = city.city_ref || "";
-		settlementRef.value = city.settlement_ref || "";
-		hideSuggest();
-		loadWarehouses();
 	}
 
 	function loadWarehouses() {
@@ -219,10 +257,18 @@
 		settlementRef.value = "";
 		resetWarehouse();
 		if (query.length < 2) {
+			matchedCities = [];
+			autoSelectPending = false;
 			hideSuggest();
 			return;
 		}
 		if (cityCache[query]) {
+			matchedCities = cityCache[query].slice();
+			if (autoSelectPending) {
+				autoSelectPending = false;
+				selectFirstCity();
+				return;
+			}
 			renderCities(cityCache[query]);
 			return;
 		}
@@ -246,9 +292,16 @@
 			.then(function (json) {
 				var cities = json.success && json.data ? json.data.cities || [] : [];
 				cityCache[query] = cities;
-				if (cityInput.value.trim() === query) {
-					renderCities(cities);
+				if (cityInput.value.trim() !== query) {
+					return;
 				}
+				matchedCities = cities.slice();
+				if (autoSelectPending) {
+					autoSelectPending = false;
+					selectFirstCity();
+					return;
+				}
+				renderCities(cities);
 			})
 			.catch(function (err) {
 				if (err && err.name === "AbortError") {
@@ -267,8 +320,16 @@
 		cityTimer = window.setTimeout(searchCities, 320);
 	});
 
+	cityInput.addEventListener("keydown", function (event) {
+		if (event.key !== "Enter") {
+			return;
+		}
+		event.preventDefault();
+		commitCityFromList();
+	});
+
 	cityInput.addEventListener("blur", function () {
-		window.setTimeout(hideSuggest, 180);
+		commitCityFromList();
 	});
 
 	warehouse.addEventListener("change", function () {
@@ -311,6 +372,7 @@
 	form.addEventListener("submit", function (event) {
 		event.preventDefault();
 		clearErrors();
+		commitCityFromList();
 
 		var errors = validateForm();
 		if (Object.keys(errors).length) {

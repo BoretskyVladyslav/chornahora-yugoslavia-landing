@@ -35,10 +35,12 @@ $amount = (int) CHORNAHORA_BOOK_PRICE;
 
 				<div class="checkout-field checkout-field--suggest checkout-field--chevron">
 					<label for="ch-city">Виберіть населений пункт</label>
-					<input id="ch-city" name="city" type="text" autocomplete="off" placeholder="Виберіть населений пункт" required>
+					<div class="checkout-city">
+						<input id="ch-city" name="city" type="text" autocomplete="off" placeholder="Виберіть населений пункт" required>
+						<ul class="checkout-suggest" id="ch-city-suggest" hidden role="listbox"></ul>
+					</div>
 					<input type="hidden" name="city_ref" id="ch-city-ref">
 					<input type="hidden" name="settlement_ref" id="ch-settlement-ref">
-					<ul class="checkout-suggest" id="ch-city-suggest" hidden role="listbox"></ul>
 					<span class="checkout-field__error" data-error-for="city"></span>
 				</div>
 
