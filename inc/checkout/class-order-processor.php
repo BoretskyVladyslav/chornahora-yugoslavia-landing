@@ -408,6 +408,43 @@ class Chornahora_Order_Processor {
 	}
 
 	private static function create_order_id() {
-		return 'CH-' . gmdate( 'Ymd' ) . '-' . strtoupper( wp_generate_password( 6, false, false ) );
+		global $wpdb;
+
+		$option = 'ch_next_order_number';
+		$start  = 100;
+
+		$current = (int) get_option( $option, 0 );
+		if ( $current < $start ) {
+			update_option( $option, $start );
+		}
+
+		$updated = $wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$wpdb->options} SET option_value = LAST_INSERT_ID(option_value + 1) WHERE option_name = %s",
+				$option
+			)
+		);
+
+		if ( ! $updated ) {
+			add_option( $option, $start, '', 'no' );
+			$wpdb->query(
+				$wpdb->prepare(
+					"UPDATE {$wpdb->options} SET option_value = LAST_INSERT_ID(option_value + 1) WHERE option_name = %s",
+					$option
+				)
+			);
+		}
+
+		$next = (int) $wpdb->get_var( 'SELECT LAST_INSERT_ID()' );
+		wp_cache_delete( $option, 'options' );
+		wp_cache_delete( 'alloptions', 'options' );
+
+		$assigned = $next - 1;
+		if ( $assigned < $start ) {
+			$assigned = $start;
+			update_option( $option, $start + 1 );
+		}
+
+		return (string) $assigned;
 	}
 }

@@ -88,6 +88,16 @@ function send_to_google_sheets( $payload, $blocking = false ) {
 function chornahora_theme_setup() {
 	add_theme_support( 'title-tag' );
 	add_theme_support( 'html5', array( 'search-form', 'comment-form', 'comment-list', 'gallery', 'caption', 'style', 'script' ) );
+
+	$title = 'Кривава агонія Югославії - Книга - Видавництво Чорна гора';
+	if ( get_option( 'blogname' ) !== $title ) {
+		update_option( 'blogname', $title );
+	}
+
+	$next_number = (int) get_option( 'ch_next_order_number', 0 );
+	if ( $next_number < 100 ) {
+		update_option( 'ch_next_order_number', 100 );
+	}
 }
 add_action( 'after_setup_theme', 'chornahora_theme_setup' );
 
