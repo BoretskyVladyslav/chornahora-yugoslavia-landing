@@ -57,7 +57,7 @@
 	var activeCityIndex = -1;
 	var warehouseItems = [];
 	var activeWarehouseIndex = -1;
-	var CITY_DEBOUNCE_MS = 300;
+	var CITY_DEBOUNCE_MS = 350;
 	var cityCache = {};
 	var warehouseCache = {};
 	var abortCity = null;
@@ -499,9 +499,17 @@
 			settlement_ref: settlement_ref,
 		})
 			.then(function (json) {
-				var list = json && json.success && json.data ? json.data.warehouses || [] : [];
-				warehouseCache[key] = list;
+				var list = [];
+				if (json && json.success && json.data && Array.isArray(json.data.warehouses)) {
+					list = json.data.warehouses;
+				}
+				if (list.length) {
+					warehouseCache[key] = list;
+				}
 				fillWarehouses(list);
+				if (!list.length) {
+					setStatus("Відділення не знайдено. Спробуйте інше місто або ще раз.");
+				}
 			})
 			.catch(function () {
 				resetWarehouse();
@@ -540,8 +548,13 @@
 		abortCity = new AbortController();
 		post("ch_search_cities", { query: query }, abortCity.signal)
 			.then(function (json) {
-				var cities = json && json.success && json.data ? json.data.cities || [] : [];
-				cityCache[query] = cities;
+				var cities = [];
+				if (json && json.success && json.data && Array.isArray(json.data.cities)) {
+					cities = json.data.cities;
+				}
+				if (cities.length) {
+					cityCache[query] = cities;
+				}
 				if (citySearch.value.trim() === query) {
 					activeCities = cities;
 					activeCityIndex = cities.length ? 0 : -1;
@@ -552,7 +565,12 @@
 				if (err && err.name === "AbortError") {
 					return;
 				}
-				renderList(cityList, [], query, selectCity, -1);
+				if (citySearch.value.trim() === query) {
+					activeCities = [];
+					activeCityIndex = -1;
+					renderList(cityList, [], query, selectCity, -1);
+					setStatus("Не вдалося знайти населений пункт. Спробуйте ще раз.");
+				}
 			})
 			.then(function () {
 				if (searchGen !== citySearchGen) {

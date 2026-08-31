@@ -18,14 +18,25 @@ function chornahora_ajax_post_text( $key ) {
 	return sanitize_text_field( wp_unslash( $_POST[ $key ] ) );
 }
 
+function chornahora_ajax_post_query( $key ) {
+	if ( ! isset( $_POST[ $key ] ) ) {
+		return '';
+	}
+
+	$value = wp_unslash( $_POST[ $key ] );
+	$value = wp_check_invalid_utf8( (string) $value );
+
+	return trim( wp_strip_all_tags( $value ) );
+}
+
 function ch_search_cities() {
 	chornahora_ajax_verify();
 
 	if ( ! class_exists( 'Chornahora_Nova_Poshta' ) ) {
-		wp_send_json_success( array( 'cities' => array() ) );
+		wp_send_json_error( array( 'message' => 'Nova Poshta недоступна.', 'cities' => array() ), 500 );
 	}
 
-	$cities = Chornahora_Nova_Poshta::search_cities( chornahora_ajax_post_text( 'query' ) );
+	$cities = Chornahora_Nova_Poshta::search_cities( chornahora_ajax_post_query( 'query' ) );
 
 	wp_send_json_success( array( 'cities' => is_array( $cities ) ? $cities : array() ) );
 }
@@ -34,7 +45,7 @@ function ch_get_warehouses() {
 	chornahora_ajax_verify();
 
 	if ( ! class_exists( 'Chornahora_Nova_Poshta' ) ) {
-		wp_send_json_success( array( 'warehouses' => array() ) );
+		wp_send_json_error( array( 'message' => 'Nova Poshta недоступна.', 'warehouses' => array() ), 500 );
 	}
 
 	$warehouses = Chornahora_Nova_Poshta::get_warehouses(

@@ -8,37 +8,64 @@ class Chornahora_Nova_Poshta {
 	const API_URL     = 'https://api.novaposhta.ua/v2.0/json/';
 	const PAGE_LIMIT  = 500;
 	const MAX_PAGES   = 10;
-	const ALLOWED_CAT = array( 'branch', 'postomat' );
+	const ALLOWED_CAT = array( 'branch', 'postomat', 'store', 'postmachine' );
+
+	public static function api_key() {
+		$key = defined( 'CHORNAHORA_NP_API_KEY' ) ? CHORNAHORA_NP_API_KEY : '';
+
+		return trim( (string) $key );
+	}
 
 	public static function search_cities( $query ) {
 		$query = trim( wp_strip_all_tags( (string) $query ) );
 
-		if ( mb_strlen( $query ) < 2 ) {
+		if ( function_exists( 'mb_strlen' ) ) {
+			$too_short = mb_strlen( $query ) < 2;
+		} else {
+			$too_short = strlen( $query ) < 2;
+		}
+
+		if ( $too_short ) {
 			return array();
 		}
 
-		$cache_key = 'ch_np_c_' . md5( mb_strtolower( $query ) );
+		$cache_key = 'ch_np_c3_' . md5( function_exists( 'mb_strtolower' ) ? mb_strtolower( $query ) : strtolower( $query ) );
 		$cached    = get_transient( $cache_key );
 
-		if ( is_array( $cached ) ) {
+		if ( is_array( $cached ) && ! empty( $cached ) ) {
 			return $cached;
 		}
 
-		$response = self::request(
-			'Address',
-			'searchSettlements',
-			array(
-				'CityName' => $query,
-				'Limit'    => '20',
-			)
+		$props = array(
+			'CityName' => $query,
+			'Limit'    => '20',
+			'Page'     => '1',
 		);
 
-		if ( null === $response ) {
-			return array();
+		$response = self::request( 'Address', 'searchSettlements', $props );
+
+		if ( null === $response || array() === $response ) {
+			$response = self::request( 'AddressGeneral', 'searchSettlements', $props );
 		}
 
-		$cities = self::normalize_settlements( $response );
-		set_transient( $cache_key, $cities, 15 * MINUTE_IN_SECONDS );
+		$cities = self::normalize_settlements( is_array( $response ) ? $response : array() );
+
+		if ( array() === $cities ) {
+			$cities = self::normalize_cities_catalog(
+				self::request(
+					'Address',
+					'getCities',
+					array(
+						'FindByString' => $query,
+						'Limit'        => '20',
+					)
+				)
+			);
+		}
+
+		if ( ! empty( $cities ) ) {
+			set_transient( $cache_key, $cities, 15 * MINUTE_IN_SECONDS );
+		}
 
 		return $cities;
 	}
@@ -51,10 +78,10 @@ class Chornahora_Nova_Poshta {
 			return array();
 		}
 
-		$cache_key = 'ch_np_w2_' . md5( $city_ref . '|' . $settlement_ref );
+		$cache_key = 'ch_np_w3_' . md5( $city_ref . '|' . $settlement_ref );
 		$cached    = get_transient( $cache_key );
 
-		if ( is_array( $cached ) ) {
+		if ( is_array( $cached ) && ! empty( $cached ) ) {
 			return $cached;
 		}
 
@@ -72,7 +99,10 @@ class Chornahora_Nova_Poshta {
 		}
 
 		$warehouses = self::normalize_warehouses( $rows );
-		set_transient( $cache_key, $warehouses, HOUR_IN_SECONDS );
+
+		if ( ! empty( $warehouses ) ) {
+			set_transient( $cache_key, $warehouses, HOUR_IN_SECONDS );
+		}
 
 		return $warehouses;
 	}
@@ -97,6 +127,10 @@ class Chornahora_Nova_Poshta {
 			$chunk = self::request( 'AddressGeneral', 'getWarehouses', $props );
 
 			if ( null === $chunk ) {
+				$chunk = self::request( 'Address', 'getWarehouses', $props );
+			}
+
+			if ( null === $chunk ) {
 				return empty( $all ) ? null : $all;
 			}
 
@@ -111,57 +145,83 @@ class Chornahora_Nova_Poshta {
 	}
 
 	private static function request( $model, $method, $properties ) {
+		$api_key = self::api_key();
+
+		if ( '' === $api_key ) {
+			self::log( $model, $method, 'missing API key' );
+			return null;
+		}
+
 		$payload = wp_json_encode(
 			array(
-				'apiKey'           => CHORNAHORA_NP_API_KEY,
+				'apiKey'           => $api_key,
 				'modelName'        => $model,
 				'calledMethod'     => $method,
 				'methodProperties' => $properties,
-			)
+			),
+			JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
 		);
 
 		if ( false === $payload ) {
+			self::log( $model, $method, 'failed to encode JSON payload' );
 			return null;
 		}
 
 		$remote = wp_remote_post(
 			self::API_URL,
 			array(
-				'timeout' => 12,
-				'headers' => array(
-					'Content-Type' => 'application/json',
+				'timeout'     => 30,
+				'redirection' => 5,
+				'headers'     => array(
+					'Content-Type' => 'application/json; charset=utf-8',
+					'Accept'       => 'application/json',
 				),
-				'body'    => $payload,
+				'body'        => $payload,
 			)
 		);
 
 		if ( is_wp_error( $remote ) ) {
+			self::log( $model, $method, 'wp_remote_post: ' . $remote->get_error_code() . ' ' . $remote->get_error_message() );
 			return null;
 		}
 
 		$code = (int) wp_remote_retrieve_response_code( $remote );
 
 		if ( $code < 200 || $code >= 300 ) {
+			self::log( $model, $method, 'HTTP ' . $code );
 			return null;
 		}
 
 		$body = trim( (string) wp_remote_retrieve_body( $remote ) );
 
 		if ( '' === $body ) {
+			self::log( $model, $method, 'empty response body' );
 			return null;
 		}
 
 		$decoded = json_decode( $body, true );
 
 		if ( JSON_ERROR_NONE !== json_last_error() || ! is_array( $decoded ) ) {
+			self::log( $model, $method, 'invalid JSON: ' . json_last_error_msg() );
 			return null;
 		}
 
 		if ( empty( $decoded['success'] ) ) {
-			return array();
+			$errors = isset( $decoded['errors'] ) ? $decoded['errors'] : array();
+			$codes  = isset( $decoded['errorCodes'] ) ? $decoded['errorCodes'] : array();
+			self::log(
+				$model,
+				$method,
+				'API success=false errors=' . wp_json_encode( $errors ) . ' codes=' . wp_json_encode( $codes )
+			);
+			return null;
 		}
 
 		return isset( $decoded['data'] ) && is_array( $decoded['data'] ) ? $decoded['data'] : array();
+	}
+
+	private static function log( $model, $method, $message ) {
+		error_log( 'Chornahora NP ' . $model . '/' . $method . ': ' . $message );
 	}
 
 	private static function normalize_settlements( $data ) {
@@ -173,6 +233,8 @@ class Chornahora_Nova_Poshta {
 
 		if ( isset( $data[0] ) && is_array( $data[0] ) && isset( $data[0]['Addresses'] ) && is_array( $data[0]['Addresses'] ) ) {
 			$addresses = $data[0]['Addresses'];
+		} elseif ( isset( $data['Addresses'] ) && is_array( $data['Addresses'] ) ) {
+			$addresses = $data['Addresses'];
 		} else {
 			$addresses = $data;
 		}
@@ -207,6 +269,38 @@ class Chornahora_Nova_Poshta {
 				'label'          => $label,
 				'settlement_ref' => $ref,
 				'city_ref'       => $cityref,
+			);
+		}
+
+		return $out;
+	}
+
+	private static function normalize_cities_catalog( $data ) {
+		$out = array();
+
+		if ( ! is_array( $data ) ) {
+			return $out;
+		}
+
+		foreach ( $data as $row ) {
+			if ( ! is_array( $row ) || empty( $row['Ref'] ) ) {
+				continue;
+			}
+
+			$label = isset( $row['Description'] ) ? (string) $row['Description'] : '';
+
+			if ( '' === $label ) {
+				continue;
+			}
+
+			if ( ! empty( $row['AreaDescription'] ) ) {
+				$label .= ', ' . $row['AreaDescription'];
+			}
+
+			$out[] = array(
+				'label'          => $label,
+				'settlement_ref' => '',
+				'city_ref'       => (string) $row['Ref'],
 			);
 		}
 
@@ -260,7 +354,7 @@ class Chornahora_Nova_Poshta {
 			return false;
 		}
 
-		if ( in_array( $category, self::ALLOWED_CAT, true ) ) {
+		if ( '' === $category || in_array( $category, self::ALLOWED_CAT, true ) ) {
 			return true;
 		}
 

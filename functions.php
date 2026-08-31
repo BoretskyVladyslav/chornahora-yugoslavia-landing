@@ -267,7 +267,7 @@ function chornahora_theme_scripts() {
 				'chornahora-checkout',
 				'chCheckout',
 				array(
-					'ajaxUrl'     => chornahora_https_url( admin_url( 'admin-ajax.php' ) ),
+					'ajaxUrl'     => admin_url( 'admin-ajax.php' ),
 					'nonce'       => wp_create_nonce( 'chornahora_checkout' ),
 					'amount'      => CHORNAHORA_BOOK_PRICE,
 					'thankYouUrl' => chornahora_thankyou_url(),
