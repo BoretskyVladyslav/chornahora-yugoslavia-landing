@@ -50,6 +50,14 @@ class Chornahora_Order_Processor {
 		self::send_to_google_sheets( $payload );
 		do_action( 'chornahora_order_created', $payload, $post_id );
 
+		try {
+			if ( class_exists( 'Chornahora_Leadcrm' ) ) {
+				Chornahora_Leadcrm::send_order( $validated );
+			}
+		} catch ( Throwable $e ) {
+			error_log( 'Chornahora LeadCRM: ' . $e->getMessage() );
+		}
+
 		$result = array(
 			'success'       => true,
 			'order_id'      => $validated['order_id'],

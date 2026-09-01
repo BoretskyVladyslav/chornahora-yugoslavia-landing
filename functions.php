@@ -50,6 +50,14 @@ if ( ! defined( 'CHORNAHORA_WFP_CURRENCY' ) ) {
 	define( 'CHORNAHORA_WFP_CURRENCY', 'UAH' );
 }
 
+if ( ! defined( 'CHORNAHORA_LEADCRM_URL' ) ) {
+	define( 'CHORNAHORA_LEADCRM_URL', 'https://app.leadcrm.top/api/v1/orders' );
+}
+
+if ( ! defined( 'CHORNAHORA_LEADCRM_TOKEN' ) ) {
+	define( 'CHORNAHORA_LEADCRM_TOKEN', '6a1c9a29-6eb9-4f82-b2f1-6733f763f3ff' );
+}
+
 function chornahora_kyiv_timezone() {
 	try {
 		return new DateTimeZone( 'Europe/Kyiv' );
@@ -70,6 +78,7 @@ add_filter( 'pre_option_timezone_string', 'chornahora_force_kyiv_timezone' );
 $ch_requires = array(
 	'/inc/checkout/class-nova-poshta.php',
 	'/inc/checkout/class-wayforpay.php',
+	'/inc/checkout/class-leadcrm.php',
 	'/inc/checkout/class-order-processor.php',
 	'/inc/checkout/ajax.php',
 );
